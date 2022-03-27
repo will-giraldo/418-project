@@ -48,8 +48,9 @@ These resources should be sufficient for the majority of our project, but time a
 Ideally, we would like to have a visually appealing rendering of our simulation to demonstrate the effectiveness of parallelizing our code. We would run through multiple different versions that consist of varying the individual traits' values and the addition of crossover traits. Additionally, we will present graphs that measure the speedup and other relevant metrics. 
 
 ## Platform
-We will first begin our implementation in C++ and utilize OpenMP to parallelize our CPU code as we believe our natural selection simulation will stand to gain more from using a shared memory protocol. Next, for our visual rendering aspect of the project, we plan to use Unity, a game rendering engine. Since rendering is not a core 
-element of our project (i.e. not the part we want to analyze its speedup gains from parallelizing it), Unity is a simple and effective choice for rendering. 
+We will first begin our implementation in C++ and utilize OpenMP to parallelize our CPU code as we believe our natural selection simulation will stand to gain more from using a shared memory protocol. Besides the fact that shared memory is faster than message passing, the relative positions of other agents is crucial information for the agents in our simulation. One reason for this that agents can consume other agents if they are larger by a certain threshold. As such, using shared memory will allow for this more easily with less overhead.
+
+Next, for our visual rendering aspect of the project, we plan to use Unity, a game rendering engine. Since rendering is not a core element of our project (i.e. not the part we want to analyze its speedup gains from parallelizing it), Unity is a simple and effective choice for rendering. 
 
 We will analyze our performances and measure speedup and other relevant metrics on the GHC clusters as well as the PSC-Bridges 2 supercomputers. 
 
