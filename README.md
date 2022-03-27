@@ -1,4 +1,4 @@
-# TITL -- Hridayesh Joshi (hvj), William Giraldo (wgiraldo)
+# TITLE -- Hridayesh Joshi (hvj), William Giraldo (wgiraldo)
 
 
 ## Summary
