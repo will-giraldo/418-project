@@ -1,6 +1,13 @@
+#pragma once
+
+#include <ctime>
+
 #include "simulation.h"
 #include "agent.h"
 #include "vec2.h"
+
+#define TICKS_PER_SECOND 30.0
+#define CLOCKS_PER_TICK 1.0 / TICKS_PER_SECOND * CLOCKS_PER_SECOND
 
 
 // Runs one iteration of the simulation (all agents make one step)
@@ -35,11 +42,16 @@ void update() {
         if(closest_agent.pos.l1() <= cur.vision || closest_food.l1() <= cur.vision) {
             if(agent_dist < food_dist) {
                 // move towards the agent
+                Vec2 dir = (closest_agent.pos - cur.pos).toDir();
+                cur.moveDir(dir);
             } else {
                 // move towards the food
+                Vec2 dir = (closest_food - cur.pos).toDir();
+                cur.moveDir(dir);
             }
         } else {
             // move in a random direction
+            cur.moveDir(cur.randomNextWeightedDir());
         }
     }
 
@@ -50,9 +62,15 @@ void render() {
 }
 
 void run() {
+    clock_t time;
+    time = clock();
+    // execute loop code TICKS_PER_SECOND times per second
     while(true) {
-        update();
-        render();
+        if (clock() > time) {
+            time += CLOCKS_PER_TICK;
+            update();
+            render();
+        }
     }
 }
 
