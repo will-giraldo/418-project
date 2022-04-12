@@ -71,3 +71,16 @@ If we surpass our 100% Goals, we will attempt an implementation using CUDA. Sinc
 | 4/11 - 4/18 | Complete rendering component; Add crossover ability among agents        |
 | 4/18 - 4/25 | Finish crossover traits; Begin CUDA Implementation (if there is time) and collect relevant data        |
 | 4/25 - 4/29 | Final Report         |
+
+
+## Milestone Update
+As of Monday, April 11th, we have nearly completed the sequential implementation of the natural simulation along with a simple renderer in C++ to test our working code. Unfortunately, we have fallen a bit behind schedule and haven't started parallelizing our implementation with OpenMP. This is primarily due to the additional research we had to conduct in order to properly implement some aspects of the algorithm as well as including a way to renderer our simulation in C++. The reason for this choice is again to test our working code and to have a failsafe in case we do not get the chance to use Blender. 
+
+To catch up and produce a satisfactory final result, we are updating our schedule as such, where (WG) and (HJ) followed by a task correspond to the person (William Giraldo and Hridayesh Joshi) who is responsible for that task:
+
+### Updated Schedule 
+| Week      | Goals |
+| ----------- | ----------- |      |
+| 4/11 - 4/18 | Touch up rendering (HJ), Sequential implementation (WG), OpenMP (both)        |
+| 4/18 - 4/25 | Finish crossover traits (WG), Incorporate Blender (HJ), CUDA - if time permits       |
+| 4/25 - 4/29 | Data Collection and Final Report         |
