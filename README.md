@@ -80,7 +80,7 @@ To catch up and produce a satisfactory final result, we are updating our schedul
 
 ### Updated Schedule 
 | Week      | Goals |
-| ----------- | ----------- |      |
+| ----------- | ----------- |    
 | 4/11 - 4/18 | Touch up rendering (HJ), Sequential implementation (WG), OpenMP (both)        |
 | 4/18 - 4/25 | Finish crossover traits (WG), Incorporate Blender (HJ), CUDA - if time permits       |
 | 4/25 - 4/29 | Data Collection and Final Report         |
