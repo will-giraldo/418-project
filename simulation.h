@@ -21,7 +21,7 @@ public:
 
     Simulation(int numAgents, int numFood, int _width, int _height);
 
-    void run();
+    void runRound(int steps);
     void update();
     void render();
 };

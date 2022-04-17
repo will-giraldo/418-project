@@ -14,12 +14,12 @@
 // Agent decision process: (might want to add running from larger agents) (could add randomness as trait to decide where to go)
 // 1) Check for food or smaller agents nearby. If so then take step towards one of them (must decide priority)
 // 2) If no food/smaller agent is found, then move randomly based on speed
-void update() {
+void Simulation::update() {
 
     for(Agent cur : agents) {
 
         // get closest food
-        Vec2 closest_food = Vec2::Vec2(-1, -1);
+        Vec2 closest_food;
         double food_dist = INT_MAX;
         for(auto cfood : food) {
             if ((cfood - cur.pos).l2() < dist) {
@@ -55,21 +55,38 @@ void update() {
         }
     }
 
+    // out of bounds check & scroll over
+    if(agent.pos.x < 0) {
+        agent.pos.x = width - 1;
+    }
+    if(agent.pos.x >= width) {
+        agent.pos.x = 0;
+    }
+    if(agent.pos.y < 0) {
+        agent.pos.y = height - 1;
+    }
+    if(agent.pos.y >= height) {
+        agent.pos.y = 0;
+    }
+
 }
 
 void render() {
 
 }
 
-void run() {
+void Simulation::runRound(int steps) {
     clock_t time;
     time = clock();
+
+    int stepsTaken = 0;
     // execute loop code TICKS_PER_SECOND times per second
-    while(true) {
+    while(stepsTaken < steps) {
         if (clock() > time) {
             time += CLOCKS_PER_TICK;
             update();
             render();
+            stepsTaken++;
         }
     }
 }
