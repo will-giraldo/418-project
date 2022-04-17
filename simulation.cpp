@@ -16,42 +16,42 @@
 // 2) If no food/smaller agent is found, then move randomly based on speed
 void Simulation::update() {
 
-    for(Agent cur : agents) {
+    for(auto cur : agents) {
 
         // get closest food
         Vec2 closest_food;
         double food_dist = INT_MAX;
         for(auto cfood : food) {
-            if ((cfood - cur.pos).l2() < dist) {
+            if ((cfood - cur->pos).l2() < dist) {
                 closest_food = cfood;
-                dist = (cfood - cur.pos).l2();
+                dist = (cfood - cur->pos).l2();
             }
         }
 
         // get closest agent
-        Agent closest_agent;
+        Agent *closest_agent;
         double agent_dist = INT_MAX;
         for(auto ag : agents) {
-            if((ag.pos - cur.pos).l2() < agent_dist) {
+            if((ag->pos - cur->pos).l2() < agent_dist) {
                 closest_agent = ag;
-                agent_dist = (ag.pos - cur.pos).l2();
+                agent_dist = (ag->pos - cur->pos).l2();
             }
         }
 
         // if in vision range move towards closer target
-        if(closest_agent.pos.l1() <= cur.vision || closest_food.l1() <= cur.vision) {
+        if(closest_agent->pos.l1() <= cur->vision || closest_food.l1() <= cur->vision) {
             if(agent_dist < food_dist) {
                 // move towards the agent
-                Vec2 dir = (closest_agent.pos - cur.pos).toDir();
-                cur.moveDir(dir);
+                Vec2 dir = (closest_agent->pos - cur->pos).toDir();
+                cur->moveDir(dir);
             } else {
                 // move towards the food
-                Vec2 dir = (closest_food - cur.pos).toDir();
-                cur.moveDir(dir);
+                Vec2 dir = (closest_food - cur->pos).toDir();
+                cur->moveDir(dir);
             }
         } else {
             // move in a random direction
-            cur.moveDir(cur.randomNextWeightedDir());
+            cur->moveDir(cur->randomNextWeightedDir());
         }
     }
 
@@ -71,8 +71,17 @@ void Simulation::update() {
 
 }
 
-void render() {
+void Simulation::render(Image &I) {
+    for (auto a : agents) {
+        a->drawAgent(I);
+    }
 
+    for (auto f : food) {
+        I.drawCircle(f, foodRadius, foodColor);
+    }
+
+    I.exportFile("/out");
+    I.clearImage();
 }
 
 void Simulation::runRound(int steps) {

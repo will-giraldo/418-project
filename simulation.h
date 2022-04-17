@@ -5,16 +5,17 @@
 #include <utility>
 
 #include "agent.h"
+#include "image.h"
 #include "vec2.h"
 
-#define SIZE 1.0
+#define SIZE 4.0
 #define VISION 5
 #define SPEED 1
 
 
 class Simulation {
 public:
-    std::vector<Agent> agents;
+    std::vector<Agent*> agents;
     std::vector<Vec2> food;
     int width;
     int height;
@@ -22,8 +23,13 @@ public:
     Simulation(int numAgents, int numFood, int _width, int _height);
 
     void runRound(int steps);
+
+    Image I;
+    Color foodColor = Color(100, 237, 132);
+    int foodRadius = 1;
+
     void update();
-    void render();
+    void render(Image &I);
 };
 
 Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {

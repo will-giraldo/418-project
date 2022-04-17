@@ -2,6 +2,7 @@
 
 #include <random>
 
+#include "image.h"
 #include "vec2.h"
 
 #define ENERGY 10
@@ -45,6 +46,9 @@ public:
         }
     }
 
+    Color agentColor = Color(100, 150, 237);
+    void drawAgent(Image &I) {};
+
 };
 
 Agent::Agent(double _size, int _vision, int _speed, int _x, int _y) {
@@ -55,4 +59,8 @@ Agent::Agent(double _size, int _vision, int _speed, int _x, int _y) {
     oldPos = Vec2(_x, _y);
 
     energy = ENERGY;
+}
+
+void Agent::drawAgent(Image &I) {
+
 }
