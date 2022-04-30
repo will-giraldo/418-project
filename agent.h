@@ -1,11 +1,13 @@
 #pragma once
 
 #include <random>
+#include <cmath>
 
 #include "image.h"
 #include "vec2.h"
 
 #define ENERGY 10
+#define EAT_THRESHOLD 1.2
 
 
 class Agent {
@@ -14,6 +16,7 @@ public:
     double energy;
     int vision;
     int speed;
+    int health;
     Vec2 pos;
     Vec2 oldPos; 
 
@@ -27,7 +30,8 @@ public:
     }
     void moveDir(Vec2 dir) {
         oldPos = pos;
-        pos = pos + dir;
+        pos = pos + speed * (dir.toDir());
+        reduceEnergy();
     }
 
     // this is a long name :(
@@ -58,7 +62,22 @@ Agent::Agent(double _size, int _vision, int _speed, int _x, int _y) {
     pos = Vec2(_x, _y);
     oldPos = Vec2(_x, _y);
 
+    health = 0;
     energy = ENERGY;
+}
+
+Agent::canEat(Agent* agent) {
+    return size > EAT_THRESHOLD * agent->size && (pos - agent->pos).l2() < size
+}
+
+Agent::reduceEnergy() {
+    // TODO this will need tinkering to remove an appropriate amount of energy
+    energy -= (std::pow(size, 3.) * std::pow(speed, 2.) + ((double) vision)) / ENERGY;
+
+    // TODO should it set health below 0 so that other agents wont eat it if energy < 0?
+    if(energy <= 0) {
+        health = -1;
+    }
 }
 
 void Agent::drawAgent(Image &I) {

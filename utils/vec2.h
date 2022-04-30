@@ -21,6 +21,7 @@ public:
         return x + y;
     }
 
+    // casts to a valid direction in an integer grid
     Vec2 toDir() {
         Vec2 vec;
         double len = this->l2();
@@ -44,6 +45,16 @@ public:
         Vec2 vec;
         vec.x = x + v.x;
         vec.y = y + v.y;
+
+        return vec;
+    }
+
+    Vec2 operator*(const int a) {
+        Vec2 vec;
+        vec.x = a * x;
+        vec.y = a * y;
+
+        return vec; 
     }
 };
 

@@ -7,6 +7,7 @@
 #include "agent.h"
 #include "image.h"
 #include "vec2.h"
+#include "food.h"
 
 #define SIZE 4.0
 #define VISION 5
@@ -16,7 +17,7 @@
 class Simulation {
 public:
     std::vector<Agent*> agents;
-    std::vector<Vec2> food;
+    std::vector<Food*> food;
     int width;
     int height;
 
@@ -35,8 +36,8 @@ public:
 Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
     width = _width;
     height = _height;
-    agents = std::vector<Agent>(numAgents);
-    food = std::vector<Vec2>(numFood);
+    agents = std::vector<Agent*>(numAgents);
+    food = std::vector<Food*>(numFood);
 
     // random number code from https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
     std::random_device rd; // obtain a random number from hardware
@@ -48,11 +49,11 @@ Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
 
 
     for(int i = 0; i < numAgents; i++) {
-        agents[i] = Agent(SIZE, VISION, SPEED, Wdistr(gen), Hdistr(gen));
+        agents[i] = &Agent(SIZE, VISION, SPEED, Wdistr(gen), Hdistr(gen));
     }
 
     for(int i = 0; i < numFood; i++) {
-        food[i] = Vec2(Wdistr(gen), Hdistr(gen));
+        food[i] = &Food(Vec2(Wdistr(gen), Hdistr(gen)));
     }
 
 }
