@@ -5,8 +5,8 @@
 #include <utility>
 
 #include "agent.h"
-#include "image.h"
-#include "vec2.h"
+#include "./utils/image.h"
+#include "./utils/vec2.h"
 #include "food.h"
 
 #define SIZE 4.0
@@ -49,11 +49,13 @@ Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
 
 
     for(int i = 0; i < numAgents; i++) {
-        agents[i] = &Agent(SIZE, VISION, SPEED, Wdistr(gen), Hdistr(gen));
+        Agent ag = Agent(SIZE, VISION, SPEED, Wdistr(gen), Hdistr(gen));
+        agents[i] = &ag;
     }
 
     for(int i = 0; i < numFood; i++) {
-        food[i] = &Food(Vec2(Wdistr(gen), Hdistr(gen)));
+        Food fd = Food(Vec2(Wdistr(gen), Hdistr(gen)));
+        food[i] = &fd;
     }
 
 }

@@ -3,8 +3,8 @@
 #include <random>
 #include <cmath>
 
-#include "image.h"
-#include "vec2.h"
+#include "./utils/image.h"
+#include "./utils/vec2.h"
 
 #define ENERGY 10
 #define EAT_THRESHOLD 1.2
@@ -22,6 +22,10 @@ public:
 
     Agent() {}
     Agent(double _size, int _vision, int _speed, int _x, int _y);
+    void reduceEnergy();
+    bool canEat(Agent* agent);
+    void drawAgent(Image &I);
+
 
     // use these function to update position to ensure that oldPos is always properly updated
     void updatePos(Vec2 newPos) {
@@ -30,7 +34,7 @@ public:
     }
     void moveDir(Vec2 dir) {
         oldPos = pos;
-        pos = pos + speed * (dir.toDir());
+        pos = pos + (dir.toDir()) * speed;
         reduceEnergy();
     }
 
@@ -51,7 +55,6 @@ public:
     }
 
     Color agentColor = Color(100, 150, 237);
-    void drawAgent(Image &I) {};
 
 };
 
@@ -66,11 +69,11 @@ Agent::Agent(double _size, int _vision, int _speed, int _x, int _y) {
     energy = ENERGY;
 }
 
-Agent::canEat(Agent* agent) {
-    return size > EAT_THRESHOLD * agent->size && (pos - agent->pos).l2() < size
+bool Agent::canEat(Agent* agent) {
+    return size > EAT_THRESHOLD * agent->size && (pos - agent->pos).l2() < size;
 }
 
-Agent::reduceEnergy() {
+void Agent::reduceEnergy() {
     // TODO this will need tinkering to remove an appropriate amount of energy
     energy -= (std::pow(size, 3.) * std::pow(speed, 2.) + ((double) vision)) / ENERGY;
 

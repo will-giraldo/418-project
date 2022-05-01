@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream> 
 
+#include "vec2.h"
+
 
 class Color {
 public: 
@@ -10,8 +12,12 @@ public:
     
     Color() {r = 0; g = 0; b = 0;}
 
-    Color(uint8_t _r, uint8_t _g, uint8_t _b);
-}
+    Color(uint8_t _r, uint8_t _g, uint8_t _b) {
+        r = _r;
+        g = _g;
+        b = _b;
+    }
+};
 
 class Image {
 public: 
@@ -34,10 +40,10 @@ public:
     }
 
     void drawCircle(Vec2 &center, int radius, Color color) {
-        size_t xstart = max(0, radius - center.x);
-        size_t xend = min(w - 1, radius + center.x);
-        size_t xstart = max(0, radius - center.y);
-        size_t xend = min(h - 1, radius + center.y);
+        size_t xstart = std::max(0, radius - center.x);
+        size_t xend = std::min(w - 1, (size_t)(radius + center.x));
+        size_t ystart = std::max(0, radius - center.y);
+        size_t yend = std::min(h - 1, (size_t)(radius + center.y));
         for(size_t x = xstart; x < xend; x++) {
             for(size_t y = ystart; y < yend; y++) {
                 size_t i = w * y + x;
@@ -48,14 +54,14 @@ public:
 
     bool exportFile(const std::string &path) {
         if (currFrame >= maxFrames) {
-            std::cout << "Reached max frame cap!" << endl;
-            return;
+            std::cout << "Reached max frame cap!" << std::endl;
+            return false;
         }
 
         std::string filename = path + std::to_string(currFrame) + ".ppm";
 
         // Write data into ppm output file
-        ofstream output_file(filename.c_str(), ios::binary);
+        std::ofstream output_file(filename.c_str(), std::ios::binary);
         
         for(size_t y = 0; y < h; y++) {
             size_t row = w * y;
@@ -69,4 +75,4 @@ public:
         currFrame++;
         output_file.close();
     }
-}
+};

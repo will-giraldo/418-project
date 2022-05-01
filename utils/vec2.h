@@ -49,7 +49,7 @@ public:
         return vec;
     }
 
-    Vec2 operator*(const int a) {
+    Vec2 operator*(const int& a) {
         Vec2 vec;
         vec.x = a * x;
         vec.y = a * y;
