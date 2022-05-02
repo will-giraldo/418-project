@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream> 
+#include <sstream>
 
 #include "vec2.h"
 

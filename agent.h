@@ -48,8 +48,8 @@ public:
         if(dis(gen) < OLD_PROB) {
             return (pos - oldPos).toDir();
         } else {
-            int _x = round(ndis(gen));
-            int _y = round(ndis(gen));
+            int _x = (int) round(ndis(gen));
+            int _y = (int) round(ndis(gen));
             return Vec2(_x, _y);
         }
     }
