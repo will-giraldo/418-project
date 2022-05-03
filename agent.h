@@ -18,7 +18,7 @@
 
 class Agent {
 public:
-    double size;
+    int size;
     double energy;
     int vision;
     int speed;
@@ -68,7 +68,7 @@ public:
         }
     }
 
-    Color color = Color(100, 150, 237);
+    Color color = Color(100, 150, 237, 255);
 
 };
 
@@ -148,47 +148,55 @@ void Agent::drawAgent(Image &I) {
 }
 
 int Agent::render(SDL_Renderer* renderer) {
-    int x = pos.x;
-    int y = pos.y;
-    int offsetx, offsety, d;
-    int status;
+    SDL_Rect rect;
+    rect.x = pos.x;
+    rect.y = pos.y;
+    rect.w = size * 5;
+    rect.h = size * 5;
+    SDL_RenderFillRect(renderer, &rect);
 
-    // CHECK_RENDERER_MAGIC(renderer, -1);
+    return 0;
+    // int x = pos.x;
+    // int y = pos.y;
+    // int offsetx, offsety, d;
+    // int status;
 
-    offsetx = 0;
-    offsety = size;
-    d = size -1;
-    status = 0;
+    // // CHECK_RENDERER_MAGIC(renderer, -1);
 
-    while (offsety >= offsetx) {
-        status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
-        status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
-        status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
-        status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
-        status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
-        status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
-        status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
-        status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
+    // offsetx = 0;
+    // offsety = size;
+    // d = size -1;
+    // status = 0;
 
-        if (status < 0) {
-            status = -1;
-            break;
-        }
+    // while (offsety >= offsetx) {
+    //     status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
+    //     status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
+    //     status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
+    //     status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
+    //     status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
+    //     status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
+    //     status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
+    //     status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
 
-        if (d >= 2*offsetx) {
-            d -= 2*offsetx + 1;
-            offsetx +=1;
-        }
-        else if (d < 2 * (size - offsety)) {
-            d += 2 * offsety - 1;
-            offsety -= 1;
-        }
-        else {
-            d += 2 * (offsety - offsetx - 1);
-            offsety -= 1;
-            offsetx += 1;
-        }
-    }
+    //     if (status < 0) {
+    //         status = -1;
+    //         break;
+    //     }
 
-    return status;
+    //     if (d >= 2*offsetx) {
+    //         d -= 2*offsetx + 1;
+    //         offsetx +=1;
+    //     }
+    //     else if (d < 2 * (size - offsety)) {
+    //         d += 2 * offsety - 1;
+    //         offsety -= 1;
+    //     }
+    //     else {
+    //         d += 2 * (offsety - offsetx - 1);
+    //         offsety -= 1;
+    //         offsetx += 1;
+    //     }
+    // }
+
+    // return status;
 }

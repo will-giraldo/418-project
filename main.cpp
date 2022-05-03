@@ -9,8 +9,8 @@
 
 #define WIDTH 700
 #define HEIGHT 700
-#define NUM_ROUNDS 500
-#define STEPS_PER_ROUND 500
+#define NUM_ROUNDS 20
+#define STEPS_PER_ROUND 10
 
 
 int main(int argc, char* argv[]) {
@@ -34,26 +34,50 @@ int main(int argc, char* argv[]) {
     );
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+    
 
     // Initialize simulation
-    int numAgents = 100;
-    int numFood = 50;
+    int numAgents = 5;
+    int numFood = 5;
     auto t1 = high_resolution_clock::now();
     Simulation sim(numAgents, numFood, WIDTH, HEIGHT, renderer);
     auto t2 = high_resolution_clock::now();
     duration<double, std::milli> construct_time = t2 - t1;
 
 
+    // Set renderer to blank canvas
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+
+
+    // TODO: remove dead code
+    // for(int i = 0; i < NUM_ROUNDS; i++) {
+    // SDL_Rect rect;
+    // rect.x = -900;
+    // rect.y = -200;
+    // rect.w = 100;
+    // rect.h = 50;
+    // SDL_SetRenderDrawColor(renderer, 140, 200, 5, 255);
+    // SDL_RenderFillRect(renderer, &rect);
+    // SDL_Delay(300);
+    // return 0;
+    // }
+    // SDL_RenderPresent(renderer);
+    // SDL_Delay(1000);
+
 
     // Run simulation
     double total_time = 0.;
-    sim.init();
+    // sim.init();
     for(int r = 0; r < NUM_ROUNDS; r++) {
+        std::cout << r << std::endl;
         t1 = high_resolution_clock::now();
 
         sim.runRound(STEPS_PER_ROUND);
         sim.finishRound();
-
+        // TODO: remove delay here and figure out how to render at 30 fps
+        SDL_Delay(500);
         t2 = high_resolution_clock::now();
         duration<double, std::milli> round_time = t2 - t1;
         round_times[r] = round_time.count();
@@ -62,54 +86,10 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Total time was " << total_time << " ms\n";
 
-    // sim.destroy();
-
-    // SDL_Init(SDL_INIT_VIDEO);
-
-    // SDL_Window *window = SDL_CreateWindow(
-    //     "SDL2Test",
-    //     SDL_WINDOWPOS_UNDEFINED,
-    //     SDL_WINDOWPOS_UNDEFINED,
-    //     WIDTH,
-    //     HEIGHT,
-    //     0
-    // );
-
-    // SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
-    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    // SDL_RenderClear(renderer);
-    // SDL_RenderPresent(renderer);
-
-    // SDL_Delay(3000);
-
-    // destroy sdl window
+    // Destroy SDL parameters
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 
-    // setup simulation
-    // int numAgents = 50;
-    // int numFood = 50;
-    // auto t1 = high_resolution_clock::now();
-    // Simulation simu(numAgents, numFood, WIDTH, HEIGHT);
-    // auto t2 = high_resolution_clock::now();
-    // duration<double, std::milli> construct_time = t2 - t1;
-
-    // // run simulation
-    // double total_time = 0.;
-    // for(int r = 0; r < NUM_ROUNDS; r++) {
-    //     t1 = high_resolution_clock::now();
-
-    //     simu.runRound(STEPS_PER_ROUND);
-    //     simu.finishRound();
-
-    //     t2 = high_resolution_clock::now();
-    //     duration<double, std::milli> round_time = t2 - t1;
-    //     round_times[r] = round_time.count();
-    //     total_time += round_times[r];
-    // }
-
-    // std::cout << "Total time was " << total_time << " ms\n";
-
     return 0;
-
 }

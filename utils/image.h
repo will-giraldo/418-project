@@ -9,14 +9,15 @@
 
 class Color {
 public: 
-    uint8_t r, g, b; 
+    uint8_t r, g, b, a; 
     
-    Color() {r = 0; g = 0; b = 0;}
+    Color() {r = 0; g = 0; b = 0; a = 0;}
 
-    Color(uint8_t _r, uint8_t _g, uint8_t _b) {
+    Color(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _a) {
         r = _r;
         g = _g;
         b = _b;
+        a = _a;
     }
 };
 
@@ -35,7 +36,7 @@ public:
         for(size_t y = 0; y < h; y++) {
             size_t row = w * y;
             for(size_t x = 0; x < w; x++) {
-                data[row + x] = Color(255, 255, 255);
+                data[row + x] = Color(255, 255, 255, 255);
             }
         }
         return true;

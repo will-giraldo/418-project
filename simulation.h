@@ -37,7 +37,7 @@ public:
     // SDL renderer parameters
     // SDL_Window* window;
     SDL_Renderer* renderer; 
-    void render2();
+    void render();
 
     // prepares stage and agents for next round
     void finishRound();
@@ -50,7 +50,7 @@ public:
 
     // Old renderer
     Image I;
-    void render(Image &I);
+    void render1(Image &I);
 };
 
 Simulation::Simulation(int numAgents, int numFood, int _width, int _height, SDL_Renderer* _renderer) {
@@ -65,20 +65,17 @@ Simulation::Simulation(int numAgents, int numFood, int _width, int _height, SDL_
     std::mt19937 gen(rd()); // seed the generator
 
     // these are inclusive ranges [0, height/width]
-    std::uniform_int_distribution<> Hdistr(0, width - 1); 
-    std::uniform_int_distribution<> Wdistr(0, height - 1); 
+    std::uniform_int_distribution<> Wdistr(0, width - 1); 
+    std::uniform_int_distribution<> Hdistr(0, height - 1); 
 
 
     for(int i = 0; i < numAgents; i++) {
-        Agent ag = Agent(SIZE, VISION, SPEED, Wdistr(gen), Hdistr(gen));
-        agents[i] = &ag;
-        if(agents[i] == nullptr) std::cout << "NULL AGENT"; 
+        Agent *ag = new Agent(SIZE, VISION, SPEED, Wdistr(gen), Hdistr(gen));
+        agents[i] = ag;
     }
 
     for(int i = 0; i < numFood; i++) {
-        Food fd = Food(Vec2(Wdistr(gen), Hdistr(gen)), FOOD_VALUE);
-        food[i] = &fd;
-        if(food[i] == nullptr) std::cout << "NULL FOOD"; 
-
+        Food *fd = new Food(Vec2(Wdistr(gen), Hdistr(gen)), FOOD_VALUE);
+        food[i] = fd;
     }
 }

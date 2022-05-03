@@ -114,7 +114,7 @@ void Simulation::update() {
     }    
 }
 
-void Simulation::render(Image &I) {
+void Simulation::render1(Image &I) {
     for (auto a : agents) {
         a->drawAgent(I);
     }
@@ -127,34 +127,40 @@ void Simulation::render(Image &I) {
     I.clearImage();
 }
 
-void Simulation::render2() {
+void Simulation::render() {
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
     // Use agent color
     auto a = agents[0];
-    SDL_SetRenderDrawColor(renderer, a->color.r, a->color.g, a->color.b, 255);
+    SDL_SetRenderDrawColor(renderer, a->color.r, a->color.g, a->color.b, a->color.a);
     for (auto a : agents) {
         a->render(renderer);
     }
-
+    
     // Use food color
     auto f = food[0];
-    SDL_SetRenderDrawColor(renderer, f->color.r, f->color.g, f->color.b, 255);
+    SDL_SetRenderDrawColor(renderer, f->color.r, f->color.g, f->color.b, f->color.a);
     for (auto f : food) {
         f->render(renderer);
     }
+
+    // Update screen
+    SDL_RenderPresent(renderer);
+    SDL_Delay(1000);
 }
 
 void Simulation::runRound(int steps) {
     clock_t time;
     time = clock();
-    Image I;
-
     int stepsTaken = 0;
+
     // execute loop code TICKS_PER_SECOND times per second
     while(stepsTaken < steps) {
         if (clock() > time) {
             time += CLOCKS_PER_TICK;
             update();
-            render2();
+            render();
             stepsTaken++;
         }
     }
