@@ -1,14 +1,16 @@
 #pragma once
 
 #include <ctime>
+#include <random>
+#include <algorithm>
 
 #include "simulation.h"
 #include "agent.h"
-#include "util/vec2.h"
+#include "./utils/vec2.h"
 #include "food.h"
 
 #define TICKS_PER_SECOND 30.0
-#define CLOCKS_PER_TICK 1.0 / TICKS_PER_SECOND * CLOCKS_PER_SECOND
+#define CLOCKS_PER_TICK 1.0 / TICKS_PER_SECOND * CLOCKS_PER_SEC
 
 
 // Runs one iteration of the simulation (all agents make one step)
@@ -20,22 +22,21 @@ void Simulation::update() {
     // TODO make sure that all the movements and considerations of other agents is based off their old positions when parallelizing? 
     // This may need to be true even for the sequential version as well. (it does not currently account for this).
     for(auto agent : agents) {
-        if(agent->health < 0 || agent->energy <= 0.) continue;
+        if(agent->energy < 0.) continue;
 
         // get closest uneaten food
-        Food closest_food;
+        Food* closest_food;
         double food_dist = INT_MAX;
         for(auto cfood : food) {
-            if (!cfood->eaten && (cfood->pos - agent->pos).l2() < dist) {
+            if (!cfood->eaten && (cfood->pos - agent->pos).l2() < food_dist) {
                 closest_food = cfood;
-                dist = (cfood - agent->pos).l2();
+                food_dist = (cfood->pos - agent->pos).l2();
             }
         }
 
         // eat food if in range
-        if((closest_food - agent->pos).l2() < agent->size) {
-            closest_food->eaten = true;
-            agent->health++;
+        if((closest_food->pos - agent->pos).l2() < agent->size) {
+            agent->eatFood(closest_food);
 
             continue;
         }
@@ -45,7 +46,7 @@ void Simulation::update() {
         Agent *closest_agent;
         double agent_dist = INT_MAX;
         for(auto ag : agents) {
-            if(ag->health >= 0 && (ag->pos - agent->pos).l2() < agent_dist) {
+            if(ag->energy >= 0 && (ag->pos - agent->pos).l2() < agent_dist) {
                 closest_agent = ag;
                 agent_dist = (ag->pos - agent->pos).l2();
             }
@@ -53,8 +54,7 @@ void Simulation::update() {
 
         // eat closest agent if possible
         if(agent->canEat(closest_agent)) {
-            closest_agent->health = -1;
-            agent->health++;
+            agent->eatAgent(closest_agent);
 
             continue;
         } 
@@ -65,37 +65,37 @@ void Simulation::update() {
             agent->moveDir(dir.toDir());
         }
         // if in vision range move towards closer target
-        else if(closest_agent->pos.l1() <= agent->vision || closest_food.l1() <= agent->vision) {
+        else if(closest_agent->pos.l1() <= agent->vision || closest_food->pos.l1() <= agent->vision) {
             if(agent_dist < food_dist) {
                 // move towards the agent
                 Vec2 dir = (closest_agent->pos - agent->pos).toDir();
                 agent->moveDir(dir);
             } else {
                 // move towards the food
-                Vec2 dir = (closest_food - agent->pos).toDir();
+                Vec2 dir = (closest_food->pos - agent->pos).toDir();
                 agent->moveDir(dir);
             }
         } else {
             // move in a random direction
             agent->moveDir(agent->randomNextWeightedDir());
         }
+
+        // out of bounds check & scroll over
+        if(agent->pos.x < 0) {
+            agent->pos.x = width - 1;
+        }
+        if(agent->pos.x >= width) {
+            agent->pos.x = 0;
+        }
+        if(agent->pos.y < 0) {
+            agent->pos.y = height - 1;
+        }
+        if(agent->pos.y >= height) {
+            agent->pos.y = 0;
+        }
+
     }
 
-    // out of bounds check & scroll over
-    if(agent->pos.x < 0) {
-        agent->pos.x = width - 1;
-    }
-    if(agent->pos.x >= width) {
-        agent->pos.x = 0;
-    }
-    if(agent->pos.y < 0) {
-        agent->pos.y = height - 1;
-    }
-    if(agent->pos.y >= height) {
-        agent->pos.y = 0;
-    }
-
-    
 }
 
 void Simulation::render(Image &I) {
@@ -104,7 +104,7 @@ void Simulation::render(Image &I) {
     }
 
     for (auto f : food) {
-        I.drawCircle(f, foodRadius, foodColor);
+        I.drawCircle(f->pos, foodRadius, foodColor);
     }
 
     I.exportFile("/out");
@@ -121,9 +121,70 @@ void Simulation::runRound(int steps) {
         if (clock() > time) {
             time += CLOCKS_PER_TICK;
             update();
-            render();
+            // render();
             stepsTaken++;
         }
     }
+}
+
+void Simulation::repositionAgents() {
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+
+    // the range on this is inclusive on both ends
+    std::uniform_int_distribution<> Hdistr(0, width - 1); 
+    std::uniform_int_distribution<> Wdistr(0, height - 1);
+
+    for(auto ag : agents) {
+        ag->setPosition(Wdistr(gen), Hdistr(gen));
+    }
+
+}
+
+void Simulation::resetFood() {
+
+    std::random_device rd; // obtain a random number from hardware
+    std::mt19937 gen(rd()); // seed the generator
+
+    // the range on this is inclusive on both ends
+    std::uniform_int_distribution<> Hdistr(0, width - 1); 
+    std::uniform_int_distribution<> Wdistr(0, height - 1);
+
+    for(auto fd : food) {
+        fd->setPosition(Wdistr(gen), Hdistr(gen));
+    }
+
+}
+
+// currently no genetic algorithm, will simply propogate agents that survive, 
+// with a chance of mutation for their offspring. 
+void Simulation::finishRound() {
+
+    // remove the agents which died (ran out of energy)
+    auto it = std::remove_if(agents.begin(), agents.end(), [](const Agent* agent) { return agent->energy < 0; });
+    agents.erase(it, agents.end());
+
+    // reserve twice the remaining amount (each living agent will duplicate)
+    agents.reserve(2 * agents.size());
+
+    // create new agents, and reset old agent values such as energy
+    size_t range = agents.size();
+    for(size_t i = 0; i < range; i++) {
+
+        // reset current agents values
+        agents[i]->resetEnergy();
+
+        // get child of current agent, add to agent list
+        Agent* child = &(agents[i]->makeChild());
+        agents.push_back(child);
+
+    }
+
+    // reset agent positions
+    repositionAgents();
+
+    // reset food positions & eaten status
+    resetFood();
+
 }
 

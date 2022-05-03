@@ -12,6 +12,7 @@
 #define SIZE 4.0
 #define VISION 5
 #define SPEED 1
+#define FOOD_VALUE 8 // amount of energy which food replenishes when eaten
 
 
 class Simulation {
@@ -23,7 +24,17 @@ public:
 
     Simulation(int numAgents, int numFood, int _width, int _height);
 
+    // run a single round for a certain number of steps, and render (does not reset field)
     void runRound(int steps);
+
+    // prepares stage and agents for next round
+    void finishRound();
+
+    // randomly re-distributes agent positions in grid
+    void repositionAgents();
+
+    // randomly re-distributes food positions in grid
+    void resetFood();
 
     Image I;
     Color foodColor = Color(100, 237, 132);
@@ -54,7 +65,7 @@ Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
     }
 
     for(int i = 0; i < numFood; i++) {
-        Food fd = Food(Vec2(Wdistr(gen), Hdistr(gen)));
+        Food fd = Food(Vec2(Wdistr(gen), Hdistr(gen)), FOOD_VALUE);
         food[i] = &fd;
     }
 

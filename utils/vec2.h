@@ -1,8 +1,6 @@
 #pragma once
 #include <cmath>
 
-#define OLD_PROB .4
-
 // TODO should add methods to choose a random vector in a direction
 // could be useful to have ones which are weighted (to make it more likely to move in current direction of travel).
 
@@ -27,8 +25,8 @@ public:
         double len = this->l2();
         double _x = ((double) x) / len;
         double _y = ((double) y) / len;
-        vec.x = std::round(_x);
-        vec.y = std::round(_y);
+        vec.x = (int) std::round(_x);
+        vec.y = (int) std::round(_y);
 
         return vec;
     }

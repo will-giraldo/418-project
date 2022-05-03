@@ -38,6 +38,7 @@ public:
                 data[row + x] = Color(255, 255, 255);
             }
         }
+        return true;
     }
 
     void drawCircle(Vec2 &center, int radius, Color color) {
@@ -75,5 +76,6 @@ public:
 
         currFrame++;
         output_file.close();
+        return true;
     }
 };
