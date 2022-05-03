@@ -16,27 +16,33 @@
 
 
 void Simulation::init() {
-    // SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_VIDEO);
 
-    // // Create window
-    // SDL_Window *window = SDL_CreateWindow("Natural Selection",
-    //                                       SDL_WINDOWPOS_UNDEFINED,
-    //                                       SDL_WINDOWPOS_UNDEFINED,
-    //                                       width,
-    //                                       height,
-    //                                       0);
-    // if(!window) {
-    //     printf("Window could not be created!\n"
-    //            "SDL_Error: %s\n", SDL_GetError());
-    // }
-    // else {
-    //     // Create renderer
-    //     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    //     if(!renderer) {
-    //         printf("Renderer could not be created!\n"
-    //                "SDL_Error: %s\n", SDL_GetError());
-    //     }
-    // }
+    // Create window
+    SDL_Window *win = SDL_CreateWindow("Natural Selection",
+                                          SDL_WINDOWPOS_UNDEFINED,
+                                          SDL_WINDOWPOS_UNDEFINED,
+                                          width,
+                                          height,
+                                          0);
+    if(!win) {
+        printf("Window could not be created!\n"
+               "SDL_Error: %s\n", SDL_GetError());
+    }
+    else {
+        // Create renderer
+        SDL_Renderer *rend = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+        if(!rend) {
+            printf("Renderer could not be created!\n"
+                   "SDL_Error: %s\n", SDL_GetError());
+        }
+        window = win;
+        renderer = rend;
+        // Set renderer to blank canvas
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
+        SDL_RenderPresent(renderer);
+    }
 }
 
 // Runs one iteration of the simulation (all agents make one step)
@@ -167,8 +173,9 @@ void Simulation::runRound(int steps) {
 }
 
 void Simulation::destroy() {
-    // SDL_DestroyWindow(window);
-    // SDL_Quit();
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }
 
 void Simulation::repositionAgents() {

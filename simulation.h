@@ -24,39 +24,44 @@ public:
     std::vector<Food*> food;
     int width;
     int height;
+    SDL_Window* window;
+    SDL_Renderer* renderer; 
 
-    Simulation(int numAgents, int numFood, int _width, int _height, SDL_Renderer* _renderer);
+    Simulation(int numAgents, int numFood, int _width, int _height);
 
     // Class functions
+    // Initialize SDL renderer
     void init();
+
+    // Update agent parameters based on position change and food consumption
     void update();
-    // run a single round for a certain number of steps, and render (does not reset field)
+
+    // Run a single round for a certain number of steps, and render (does not reset field)
     void runRound(int steps);
-    void destroy();
-    
-    // SDL renderer parameters
-    // SDL_Window* window;
-    SDL_Renderer* renderer; 
+
+    // Renders agents and food
     void render();
 
-    // prepares stage and agents for next round
+    // Prepares stage and agents for next round
     void finishRound();
 
-    // randomly re-distributes agent positions in grid
+    // Randomly re-distributes agent positions in grid
     void repositionAgents();
 
-    // randomly re-distributes food positions in grid
+    // Randomly re-distributes food positions in grid
     void resetFood();
+
+    // Destroys SDL renderer/window
+    void destroy();
 
     // Old renderer
     Image I;
     void render1(Image &I);
 };
 
-Simulation::Simulation(int numAgents, int numFood, int _width, int _height, SDL_Renderer* _renderer) {
+Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
     width = _width;
     height = _height;
-    renderer = _renderer;
     agents = std::vector<Agent*>(numAgents);
     food = std::vector<Food*>(numFood);
 
