@@ -1,29 +1,68 @@
 #pragma once
 
 #include <iostream>
+#include <chrono>
 
+#include "simulation.h"
 #include "simulation.cpp"
 #include "SDL.h"
 
+#define WIDTH 700
+#define HEIGHT 700
+#define NUM_ROUNDS 500
+#define STEPS_PER_ROUND 500
+
 
 int main(int argc, char* argv[]) {
+    // timing setup
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+    std::vector<double> round_times(NUM_ROUNDS, 0.);
+    
+    // Initialize render window 
+    SDL_Init(SDL_INIT_VIDEO);
+
+    SDL_Window *window = SDL_CreateWindow(
+        "SDL2Test",
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        WIDTH,
+        HEIGHT,
+        0
+    );
+
+    SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
+
     // Initialize simulation
     int numAgents = 100;
     int numFood = 50;
-    int dim = 800;
-    Simulation sim(numAgents, numFood, dim, dim);
+    auto t1 = high_resolution_clock::now();
+    Simulation sim(numAgents, numFood, WIDTH, HEIGHT, renderer);
+    auto t2 = high_resolution_clock::now();
+    duration<double, std::milli> construct_time = t2 - t1;
+
+
 
     // Run simulation
-    int numRounds = 20;
-    int numSteps = 100;
+    double total_time = 0.;
     sim.init();
-    if(sim.window == nullptr) std::cout << "HERE";
-    if(sim.renderer == nullptr) std::cout << "HERE2";
-    for(int round = 0; round < numRounds; round++) {
-        sim.runRound(numSteps);
+    for(int r = 0; r < NUM_ROUNDS; r++) {
+        t1 = high_resolution_clock::now();
+
+        sim.runRound(STEPS_PER_ROUND);
+        sim.finishRound();
+
+        t2 = high_resolution_clock::now();
+        duration<double, std::milli> round_time = t2 - t1;
+        round_times[r] = round_time.count();
+        total_time += round_times[r];
     }
 
-    sim.destroy();
+    std::cout << "Total time was " << total_time << " ms\n";
+
+    // sim.destroy();
 
     // SDL_Init(SDL_INIT_VIDEO);
 
@@ -31,8 +70,8 @@ int main(int argc, char* argv[]) {
     //     "SDL2Test",
     //     SDL_WINDOWPOS_UNDEFINED,
     //     SDL_WINDOWPOS_UNDEFINED,
-    //     640,
-    //     480,
+    //     WIDTH,
+    //     HEIGHT,
     //     0
     // );
 
@@ -43,8 +82,33 @@ int main(int argc, char* argv[]) {
 
     // SDL_Delay(3000);
 
-    // SDL_DestroyWindow(window);
-    // SDL_Quit();
+    // destroy sdl window
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
+    // setup simulation
+    // int numAgents = 50;
+    // int numFood = 50;
+    // auto t1 = high_resolution_clock::now();
+    // Simulation simu(numAgents, numFood, WIDTH, HEIGHT);
+    // auto t2 = high_resolution_clock::now();
+    // duration<double, std::milli> construct_time = t2 - t1;
+
+    // // run simulation
+    // double total_time = 0.;
+    // for(int r = 0; r < NUM_ROUNDS; r++) {
+    //     t1 = high_resolution_clock::now();
+
+    //     simu.runRound(STEPS_PER_ROUND);
+    //     simu.finishRound();
+
+    //     t2 = high_resolution_clock::now();
+    //     duration<double, std::milli> round_time = t2 - t1;
+    //     round_times[r] = round_time.count();
+    //     total_time += round_times[r];
+    // }
+
+    // std::cout << "Total time was " << total_time << " ms\n";
 
     return 0;
 

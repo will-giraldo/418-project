@@ -15,6 +15,7 @@
 #define SIZE 4.0
 #define VISION 5
 #define SPEED 1
+#define FOOD_VALUE 8 // amount of energy which food replenishes when eaten
 
 
 class Simulation {
@@ -24,28 +25,38 @@ public:
     int width;
     int height;
 
-    Simulation(int numAgents, int numFood, int _width, int _height);
+    Simulation(int numAgents, int numFood, int _width, int _height, SDL_Renderer* _renderer);
 
     // Class functions
     void init();
     void update();
+    // run a single round for a certain number of steps, and render (does not reset field)
     void runRound(int steps);
     void destroy();
     
     // SDL renderer parameters
-    SDL_Window* window;
+    // SDL_Window* window;
     SDL_Renderer* renderer; 
     void render2();
 
+    // prepares stage and agents for next round
+    void finishRound();
+
+    // randomly re-distributes agent positions in grid
+    void repositionAgents();
+
+    // randomly re-distributes food positions in grid
+    void resetFood();
 
     // Old renderer
     Image I;
     void render(Image &I);
 };
 
-Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
+Simulation::Simulation(int numAgents, int numFood, int _width, int _height, SDL_Renderer* _renderer) {
     width = _width;
     height = _height;
+    renderer = _renderer;
     agents = std::vector<Agent*>(numAgents);
     food = std::vector<Food*>(numFood);
 
@@ -65,7 +76,7 @@ Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
     }
 
     for(int i = 0; i < numFood; i++) {
-        Food fd = Food(Vec2(Wdistr(gen), Hdistr(gen)));
+        Food fd = Food(Vec2(Wdistr(gen), Hdistr(gen)), FOOD_VALUE);
         food[i] = &fd;
         if(food[i] == nullptr) std::cout << "NULL FOOD"; 
 
