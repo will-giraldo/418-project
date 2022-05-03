@@ -3,6 +3,7 @@
 #include <random>
 #include <cmath>
 
+#include "SDL.h"
 #include "./utils/image.h"
 #include "./utils/vec2.h"
 
@@ -22,9 +23,11 @@ public:
 
     Agent() {}
     Agent(double _size, int _vision, int _speed, int _x, int _y);
+
     void reduceEnergy();
     bool canEat(Agent* agent);
     void drawAgent(Image &I);
+    void render(SDL_Renderer* renderer);
 
 
     // use these function to update position to ensure that oldPos is always properly updated
@@ -54,7 +57,7 @@ public:
         }
     }
 
-    Color agentColor = Color(100, 150, 237);
+    Color color = Color(100, 150, 237);
 
 };
 
@@ -84,5 +87,9 @@ void Agent::reduceEnergy() {
 }
 
 void Agent::drawAgent(Image &I) {
+
+}
+
+void Agent::render(SDL_Renderer* renderer) {
 
 }

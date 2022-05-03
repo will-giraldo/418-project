@@ -1,13 +1,16 @@
 #pragma once
 
+#include <iostream>
 #include <vector>
 #include <random>
 #include <utility>
 
 #include "agent.h"
+#include "food.h"
+#include "SDL.h"
 #include "./utils/image.h"
 #include "./utils/vec2.h"
-#include "food.h"
+
 
 #define SIZE 4.0
 #define VISION 5
@@ -23,13 +26,20 @@ public:
 
     Simulation(int numAgents, int numFood, int _width, int _height);
 
-    void runRound(int steps);
-
-    Image I;
-    Color foodColor = Color(100, 237, 132);
-    int foodRadius = 1;
-
+    // Class functions
+    void init();
     void update();
+    void runRound(int steps);
+    void destroy();
+    
+    // SDL renderer parameters
+    SDL_Window* window;
+    SDL_Renderer* renderer; 
+    void render2();
+
+
+    // Old renderer
+    Image I;
     void render(Image &I);
 };
 
@@ -51,11 +61,13 @@ Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
     for(int i = 0; i < numAgents; i++) {
         Agent ag = Agent(SIZE, VISION, SPEED, Wdistr(gen), Hdistr(gen));
         agents[i] = &ag;
+        if(agents[i] == nullptr) std::cout << "NULL AGENT"; 
     }
 
     for(int i = 0; i < numFood; i++) {
         Food fd = Food(Vec2(Wdistr(gen), Hdistr(gen)));
         food[i] = &fd;
-    }
+        if(food[i] == nullptr) std::cout << "NULL FOOD"; 
 
+    }
 }
