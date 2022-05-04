@@ -15,15 +15,6 @@
 
 
 int main(int argc, char* argv[]) {
-    omp_set_num_threads(4);
-    // Beginning of parallel region
-    #pragma omp parallel
-    {
- 
-        printf("Hello World... from thread = %d\n",
-               omp_get_thread_num());
-    }
-    return 0;
     // Timing setup
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;

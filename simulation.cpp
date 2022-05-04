@@ -50,7 +50,6 @@ void Simulation::init() {
 // 1) Check for food or smaller agents nearby. If so then take step towards one of them (must decide priority)
 // 2) If no food/smaller agent is found, then move randomly based on speed
 void Simulation::update() {
-    // TODO update/change energy, add consideration in for speed
     // TODO make sure that all the movements and considerations of other agents is based off their old positions when parallelizing? 
     // This may need to be true even for the sequential version as well. (it does not currently account for this).
     for(auto agent : agents) {
@@ -76,7 +75,7 @@ void Simulation::update() {
         Agent *closest_agent = nullptr;
         double agent_dist = INT_MAX;
         for(auto ag : agents) {
-            if(ag->pos == agent->pos) continue;
+            if(ag == agent) continue;
             if(ag->energy >= 0 && (ag->pos - agent->pos).l2() < agent_dist) {
                 closest_agent = ag;
                 agent_dist = (ag->pos - agent->pos).l2();
@@ -109,36 +108,23 @@ void Simulation::update() {
             Vec2 dir = agent->randomNextWeightedDir();
             agent->moveDir(dir);
         }
-
-        // if(closest_food && (closest_food->pos - agent->pos).l2() <= agent->vision) {
-        //      if(closest_food) {
-        //         // move towards the food
-        //         Vec2 dir = (closest_food->pos - agent->pos).toDir();
-        //         agent->moveDir(dir);
-        //     }
-        // } else {
-        //     // move in a random direction
-        //     Vec2 dir = agent->randomNextWeightedDir();
-        //     agent->moveDir(dir);
-        // }
         
         // out of bounds check & scroll over
         if(agent->pos.x < 0) {
-            agent->pos.x = width - 1;
-            agent->oldPos = agent->pos;
+            agent->newPos.x = width - 1;
         }
         if(agent->pos.x >= width) { 
-            agent->pos.x = 0;
-            agent->oldPos = agent->pos;
+            agent->newPos.x = 0;
         }
         if(agent->pos.y < 0) {
-            agent->pos.y = height - 1;
-            agent->oldPos = agent->pos;
+            agent->newPos.y = height - 1;
         }
         if(agent->pos.y >= height) {
-            agent->pos.y = 0;
-            agent->oldPos = agent->pos;
+            agent->newPos.y = 0;
         }
+    }
+    for(auto agent : agents) {
+        agent->pos = agent->newPos;
     }    
 }
 

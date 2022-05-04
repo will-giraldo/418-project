@@ -24,8 +24,9 @@ public:
     int vision;
     int speed;
     Vec2 pos;
-    Vec2 oldPos;
+    Vec2 newPos;
     bool hasEaten;
+    Vec2 lastMove;
 
     Agent() {}
     Agent(int _size, int _vision, int _speed, int _x, int _y);
@@ -44,13 +45,12 @@ public:
 
 
     // use these function to update position to ensure that oldPos is always properly updated
-    void updatePos(Vec2 newPos) {
-        oldPos = pos;
-        pos = newPos;
+    void updateNewPos(Vec2 _newPos) {
+        newPos = _newPos;
     }
     void moveDir(Vec2 dir) {
-        oldPos = pos;
-        pos = pos + (dir.toDir()) * speed;
+        newPos = pos + (dir.toDir()) * speed;
+        lastMove = dir;
         reduceEnergy();
     }
 
@@ -61,8 +61,8 @@ public:
         std::uniform_real_distribution<> dis(0.0,1.0);
         std::uniform_int_distribution<> ndis(-1,1);
 
-        if(pos != oldPos && dis(gen) < OLD_PROB) {
-            return (pos - oldPos).toDir();
+        if(lastMove != Vec2(0,0) && dis(gen) < OLD_PROB) {
+            return lastMove.toDir();
         } else {
             int _x = 0;
             int _y = 0;
@@ -84,7 +84,8 @@ Agent::Agent(int _size, int _vision, int _speed, int _x, int _y) {
     vision = _vision;
     speed = _speed;
     pos = Vec2(_x, _y);
-    oldPos = Vec2(_x, _y);
+    newPos = Vec2(_x, _y);
+    lastMove = Vec2();
 
     energy = ENERGY;
 }
@@ -95,7 +96,7 @@ bool Agent::canEat(Agent* agent) {
 
 void Agent::reduceEnergy() {
     // TODO this will need tinkering to remove an appropriate amount of energy
-    energy -= (std::pow(size, 3.) * std::pow(speed, 2.) + ((double) vision)) / (ENERGY * 200);
+    energy -= (std::pow(size, 2.) * std::pow(speed, 2.) + ((double) vision)) / (ENERGY * 200);
 }
 
 void Agent::eatFood(Food* food) {
@@ -147,7 +148,6 @@ Agent* Agent::makeChild() {
 void Agent::setPosition(int _x, int _y) {
     Vec2 _pos(_x, _y);
     pos = _pos;
-    oldPos = pos; // want these to be the same since the context for this is to change the position entirely
 }
 
 void Agent::drawAgent(Image &I) {
@@ -155,7 +155,7 @@ void Agent::drawAgent(Image &I) {
 }
 
 void Agent::render(SDL_Renderer* renderer) {
-    if(energy <= 0 || pos == oldPos)  return;
+    if(energy <= 0)  return;
 
     SDL_Rect rect;
     rect.x = pos.x;
