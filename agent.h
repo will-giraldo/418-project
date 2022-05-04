@@ -28,13 +28,13 @@ public:
     bool hasEaten;
 
     Agent() {}
-    Agent(double _size, int _vision, int _speed, int _x, int _y);
+    Agent(int _size, int _vision, int _speed, int _x, int _y);
 
     void reduceEnergy();
     bool canEat(Agent* agent);
 
     void drawAgent(Image &I);
-    int render(SDL_Renderer* renderer);
+    void render(SDL_Renderer* renderer);
     
     void eatFood(Food* food);
     void eatAgent(Agent* ag);
@@ -78,7 +78,7 @@ public:
 
 };
 
-Agent::Agent(double _size, int _vision, int _speed, int _x, int _y) {
+Agent::Agent(int _size, int _vision, int _speed, int _x, int _y) {
     // TODO maybe change initialization to be random over some range for these values
     size = _size;
     vision = _vision;
@@ -154,8 +154,8 @@ void Agent::drawAgent(Image &I) {
 
 }
 
-int Agent::render(SDL_Renderer* renderer) {
-    if(energy <= 0 || pos == oldPos)  return 0;
+void Agent::render(SDL_Renderer* renderer) {
+    if(energy <= 0 || pos == oldPos)  return;
 
     SDL_Rect rect;
     rect.x = pos.x;
@@ -164,7 +164,7 @@ int Agent::render(SDL_Renderer* renderer) {
     rect.h = size * 5;
     SDL_RenderFillRect(renderer, &rect);
 
-    return 0;
+    return;
     // int x = pos.x;
     // int y = pos.y;
     // int offsetx, offsety, d;
@@ -207,5 +207,5 @@ int Agent::render(SDL_Renderer* renderer) {
     //     }
     // }
 
-    // return status;
+    // return;
 }
