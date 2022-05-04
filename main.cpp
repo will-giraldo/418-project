@@ -15,15 +15,6 @@
 
 
 int main(int argc, char* argv[]) {
-    omp_set_num_threads(4);
-    // Beginning of parallel region
-    #pragma omp parallel
-    {
- 
-        printf("Hello World... from thread = %d\n",
-               omp_get_thread_num());
-    }
-    return 0;
     // Timing setup
     using std::chrono::high_resolution_clock;
     using std::chrono::duration_cast;
@@ -54,8 +45,6 @@ int main(int argc, char* argv[]) {
         sim.runRound(STEPS_PER_ROUND);
         sim.finishRound();
 
-        // TODO: remove delay here and figure out how to render at 30 fps
-        // SDL_Delay(5);
         t2 = high_resolution_clock::now();
         duration<double, std::milli> round_time = t2 - t1;
         round_times[r] = round_time.count();
@@ -64,7 +53,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Total time was " << total_time << " ms\n";
 
-    SDL_Delay(10000);
+    SDL_Delay(5000);
 
     // Destroy SDL parameters
     sim.destroy();

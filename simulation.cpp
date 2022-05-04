@@ -3,6 +3,7 @@
 #include <ctime>
 #include <random>
 #include <algorithm>
+#include <omp.h>
 
 #include "simulation.h"
 #include "agent.h"
@@ -13,6 +14,7 @@
 #define TICKS_PER_SECOND 300.0
 // #define CLOCKS_PER_TICK 1.0 / (TICKS_PER_SECOND * CLOCKS_PER_SEC)
 #define CLOCKS_PER_TICK (clock_t)(CLOCKS_PER_SEC / (TICKS_PER_SECOND))
+#define NUM_THREADS 4 
 
 
 void Simulation::init() {
@@ -42,6 +44,9 @@ void Simulation::init() {
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
         SDL_RenderPresent(renderer);
+
+        // set numthreads
+        omp_set_num_threads(NUM_THREADS);
     }
 }
 
@@ -52,7 +57,7 @@ void Simulation::init() {
 void Simulation::update() {
     // TODO update/change energy, add consideration in for speed
     // TODO make sure that all the movements and considerations of other agents is based off their old positions when parallelizing? 
-    // This may need to be true even for the sequential version as well. (it does not currently account for this).
+    #pragma omp parallel for schedule(static)
     for(auto agent : agents) {
         if (agent->energy <= 0.) continue;
 
@@ -76,7 +81,7 @@ void Simulation::update() {
         Agent *closest_agent = nullptr;
         double agent_dist = INT_MAX;
         for(auto ag : agents) {
-            if(ag->pos == agent->pos) continue;
+            if(ag == agent) continue;
             if(ag->energy >= 0 && (ag->pos - agent->pos).l2() < agent_dist) {
                 closest_agent = ag;
                 agent_dist = (ag->pos - agent->pos).l2();
@@ -86,7 +91,6 @@ void Simulation::update() {
         // eat closest agent if possible
         if(closest_agent && agent->canEat(closest_agent)) {
             agent->eatAgent(closest_agent);
-
             continue;
         } 
         
@@ -163,6 +167,7 @@ void Simulation::render() {
     if(agents.size()) {
         auto a = agents[0];
         SDL_SetRenderDrawColor(renderer, a->color.r, a->color.g, a->color.b, a->color.a);
+        #pragma omp parallel for schedule(static)
         for (auto a : agents) {
             a->render(renderer);
         }
@@ -172,6 +177,7 @@ void Simulation::render() {
     if(food.size()) {
         auto f = food[0];
         SDL_SetRenderDrawColor(renderer, f->color.r, f->color.g, f->color.b, f->color.a);
+        #pragma omp parallel for schedule(static)
         for (auto f : food) {
             f->render(renderer);
         }
@@ -212,10 +218,10 @@ void Simulation::repositionAgents() {
     std::uniform_int_distribution<> Hdistr(0, width - 1); 
     std::uniform_int_distribution<> Wdistr(0, height - 1);
 
+    #pragma omp parallel for schedule(static)
     for(auto ag : agents) {
         ag->setPosition(Wdistr(gen), Hdistr(gen));
     }
-
 }
 
 void Simulation::resetFood() {
@@ -227,10 +233,10 @@ void Simulation::resetFood() {
     std::uniform_int_distribution<> Hdistr(0, width - 1); 
     std::uniform_int_distribution<> Wdistr(0, height - 1);
 
+    #pragma omp parallel for schedule(static)
     for(auto fd : food) {
         fd->setPosition(Wdistr(gen), Hdistr(gen));
     }
-
 }
 
 // currently no genetic algorithm, will simply propogate agents that survive, 
@@ -239,6 +245,7 @@ void Simulation::finishRound() {
 
     // remove the agents which died (ran out of energy)
     // TODO because we used new, we need to deallocate deleted agents first with delete. 
+    #pragma omp parallel for schedule(static)
     for(int i = 0; i < agents.size(); i++) {
         if(agents[i]->energy <= 0) {
             delete agents[i];
@@ -252,6 +259,7 @@ void Simulation::finishRound() {
     agents.reserve(2 * agents.size());
 
     // create new agents, and reset old agent values such as energy
+    #pragma omp parallel for schedule(static)
     size_t range = agents.size();
     for(size_t i = 0; i < range; i++) {
 
@@ -260,7 +268,8 @@ void Simulation::finishRound() {
 
         // get child of current agent, add to agent list
         Agent* child = agents[i]->makeChild();
-        agents.push_back(child);
+        #pragma omp atomic
+        {agents.push_back(child);}
 
     }
 
@@ -269,6 +278,5 @@ void Simulation::finishRound() {
 
     // reset food positions & eaten status
     resetFood();
-
 }
 
