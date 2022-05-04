@@ -1,5 +1,3 @@
-// // #pragmaonce
-
 #include <ctime>
 #include <random>
 #include <algorithm>
@@ -61,13 +59,24 @@ void Simulation::update() {
     #pragma omp parallel for schedule(static)
     for(int i = 0; i < agents.size(); i++) {
         auto agent = agents[i];
-
         if (agent->energy <= 0.) continue;
+
+        // auto foodComp = [&](Food* a, Food* b) {
+        //     if(!a) return b;
+        //     if(!b) return a;
+        //     double adist = (a->pos - agent->pos).l2();
+        //     double bdist = (b->pos - agent->pos).l2();
+        //     return adist < bdist ? a : b;
+        // };
+
+        // #pragma omp declare reduction (foodRed:Food*:omp_out=fdcmp(omp_out,omp_in)) initializer (omp_priv=omp_orig)
 
         // get closest uneaten food
         Food* closest_food = nullptr;
         double food_dist = INT_MAX;
-        for(auto cfood : food) {
+        // #pragma omp parallel for reduction (foodRed : closest_food)
+        for(int j = 0; j < food.size(); j++) {
+            auto cfood = food[j];
             if (!cfood->eaten && (cfood->pos - agent->pos).l2() < food_dist) {
                 closest_food = cfood;
                 food_dist = (cfood->pos - agent->pos).l2();
@@ -133,7 +142,9 @@ void Simulation::update() {
         }
     }
 
-    for(auto agent : agents) {
+    #pragma omp parallel for schedule(static)
+    for(int i = 0; i < agents.size(); i++) {
+        auto agent = agents[i];
         agent->pos = agent->newPos;
     }    
 }
@@ -258,7 +269,7 @@ void Simulation::finishRound() {
 
         // Get child of current agent, add to agent list
         Agent* child = agents[i]->makeChild();
-        // #pragma omp critical
+        #pragma omp critical
         {agents.push_back(child);}
         // agents.push_back(child);
     }

@@ -96,7 +96,7 @@ bool Agent::canEat(Agent* agent) {
 
 void Agent::reduceEnergy() {
     // TODO this will need tinkering to remove an appropriate amount of energy
-    energy -= (std::pow(size, 2.) * std::pow(speed, 2.) + ((double) vision)) / (ENERGY * 200);
+    energy -= (std::pow(size, 2.) + std::pow(speed, 2.) + ((double) vision)) / (ENERGY * 200);
 }
 
 void Agent::eatFood(Food* food) {
@@ -107,7 +107,7 @@ void Agent::eatFood(Food* food) {
 
 void Agent::eatAgent(Agent* ag) {
     if(ag->energy < 0) std::cout << "Tried to eat dead agent\n";
-    energy += ag->energy; // TODO how much energy should an agent get for eating another
+    energy += ENERGY; // ag->energy; // TODO how much energy should an agent get for eating another
     ag->energy = -1;
 }
 
