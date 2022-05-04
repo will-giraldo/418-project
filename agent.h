@@ -100,7 +100,7 @@ void Agent::reduceEnergy() {
 }
 
 void Agent::eatFood(Food* food) {
-    if(food->eaten) std::cout << "Agent tried to eat food which was already eaten\n";
+    if(food->eaten) return;
     energy += food->value;
     food->eaten = true;
 }

@@ -1,4 +1,4 @@
-#pragma once
+// // #pragmaonce
 
 #include <ctime>
 #include <random>
@@ -14,7 +14,7 @@
 #define TICKS_PER_SECOND 300.0
 // #define CLOCKS_PER_TICK 1.0 / (TICKS_PER_SECOND * CLOCKS_PER_SEC)
 #define CLOCKS_PER_TICK (clock_t)(CLOCKS_PER_SEC / (TICKS_PER_SECOND))
-#define NUM_THREADS 4 
+#define NUM_THREADS 4
 
 
 void Simulation::init() {
@@ -38,14 +38,16 @@ void Simulation::init() {
             printf("Renderer could not be created!\n"
                    "SDL_Error: %s\n", SDL_GetError());
         }
+        // Setting simulation parameters
         window = win;
         renderer = rend;
+
         // Set renderer to blank canvas
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderClear(renderer);
         SDL_RenderPresent(renderer);
 
-        // set numthreads
+        // Set numthreads
         omp_set_num_threads(NUM_THREADS);
     }
 }
@@ -57,7 +59,9 @@ void Simulation::init() {
 void Simulation::update() {
     // TODO make sure that all the movements and considerations of other agents is based off their old positions when parallelizing? 
     #pragma omp parallel for schedule(static)
-    for(auto agent : agents) {
+    for(int i = 0; i < agents.size(); i++) {
+        auto agent = agents[i];
+
         if (agent->energy <= 0.) continue;
 
         // get closest uneaten food
@@ -72,7 +76,8 @@ void Simulation::update() {
 
         // eat food if in range
         if(closest_food && (closest_food->pos - agent->pos).l2() < agent->size + 2) {
-            agent->eatFood(closest_food);
+            #pragma omp critical
+            {agent->eatFood(closest_food);}
         }
 
 
@@ -127,6 +132,7 @@ void Simulation::update() {
             agent->newPos.y = 0;
         }
     }
+
     for(auto agent : agents) {
         agent->pos = agent->newPos;
     }    
@@ -153,9 +159,8 @@ void Simulation::render() {
     if(agents.size()) {
         auto a = agents[0];
         SDL_SetRenderDrawColor(renderer, a->color.r, a->color.g, a->color.b, a->color.a);
-        #pragma omp parallel for schedule(static)
-        for (auto a : agents) {
-            a->render(renderer);
+        for (int i = 0; i < agents.size(); i++) {
+            agents[i]->render(renderer);
         }
     }
     
@@ -163,9 +168,8 @@ void Simulation::render() {
     if(food.size()) {
         auto f = food[0];
         SDL_SetRenderDrawColor(renderer, f->color.r, f->color.g, f->color.b, f->color.a);
-        #pragma omp parallel for schedule(static)
-        for (auto f : food) {
-            f->render(renderer);
+        for (int i = 0; i < food.size(); i++) {
+            food[i]->render(renderer);
         }
     }
 
@@ -205,8 +209,8 @@ void Simulation::repositionAgents() {
     std::uniform_int_distribution<> Wdistr(0, height - 1);
 
     #pragma omp parallel for schedule(static)
-    for(auto ag : agents) {
-        ag->setPosition(Wdistr(gen), Hdistr(gen));
+    for(int i = 0; i < agents.size(); i++) {
+        agents[i]->setPosition(Wdistr(gen), Hdistr(gen));
     }
 }
 
@@ -220,8 +224,8 @@ void Simulation::resetFood() {
     std::uniform_int_distribution<> Wdistr(0, height - 1);
 
     #pragma omp parallel for schedule(static)
-    for(auto fd : food) {
-        fd->setPosition(Wdistr(gen), Hdistr(gen));
+    for(int i = 0; i < food.size(); i++) {
+        food[i]->setPosition(Wdistr(gen), Hdistr(gen));
     }
 }
 
@@ -245,18 +249,18 @@ void Simulation::finishRound() {
     agents.reserve(2 * agents.size());
 
     // create new agents, and reset old agent values such as energy
+    int range = agents.size();
     #pragma omp parallel for schedule(static)
-    size_t range = agents.size();
-    for(size_t i = 0; i < range; i++) {
+    for(int i = 0; i < range; i++) {
 
-        // reset current agents values
+        // Reset current agents values
         agents[i]->resetEnergy();
 
-        // get child of current agent, add to agent list
+        // Get child of current agent, add to agent list
         Agent* child = agents[i]->makeChild();
-        #pragma omp atomic
+        // #pragma omp critical
         {agents.push_back(child);}
-
+        // agents.push_back(child);
     }
 
     // reset agent positions
