@@ -24,3 +24,9 @@ file(GLOB SOURCES
 # add the executable
 add_executable(NaturalSelection main.cpp)
 target_link_libraries(NaturalSelection ${SDL2_LIBRARIES})
+
+#OpenMP
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(NaturalSelection OpenMP::OpenMP_CXX)
+endif()
