@@ -11,6 +11,8 @@ public:
 
     Vec2(int _x = 0, int _y = 0);
 
+    friend std::ostream& operator<< (std::ostream &out, const Vec2& v);
+
     double l2() {
         return sqrt(x * x + y * y);
     }
@@ -54,7 +56,22 @@ public:
 
         return vec; 
     }
+
+    bool operator==(const Vec2& v) {
+        return v.x == x && v.y == y;
+    }
+
+    bool operator!=(const Vec2& v) {
+        return v.x != x || v.y != y;
+    }
+
+
 };
+
+std::ostream& operator<< (std::ostream &out, const Vec2& v) {
+        out << "< " << v.x << ", " << v.y << " >";
+        return out;
+}
 
 Vec2::Vec2(int _x, int _y) {
     x = _x;

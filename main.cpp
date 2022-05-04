@@ -9,8 +9,8 @@
 
 #define WIDTH 700
 #define HEIGHT 700
-#define NUM_ROUNDS 20
-#define STEPS_PER_ROUND 10
+#define NUM_ROUNDS 5000
+#define STEPS_PER_ROUND 400
 
 
 int main(int argc, char* argv[]) {
@@ -37,8 +37,8 @@ int main(int argc, char* argv[]) {
     
 
     // Initialize simulation
-    int numAgents = 5;
-    int numFood = 5;
+    int numAgents = 12;
+    int numFood = 20;
     auto t1 = high_resolution_clock::now();
     Simulation sim(numAgents, numFood, WIDTH, HEIGHT, renderer);
     auto t2 = high_resolution_clock::now();
@@ -70,14 +70,18 @@ int main(int argc, char* argv[]) {
     // Run simulation
     double total_time = 0.;
     // sim.init();
+    sim.agents[0]->size = 7;
+    sim.agents[0]->energy *= 2;
     for(int r = 0; r < NUM_ROUNDS; r++) {
-        std::cout << r << std::endl;
+        if (sim.agents.size() == 0) break;
+        // std::cout << r << std::endl;
+        std::cout << sim.agents.size() << std::endl;
         t1 = high_resolution_clock::now();
 
         sim.runRound(STEPS_PER_ROUND);
         sim.finishRound();
         // TODO: remove delay here and figure out how to render at 30 fps
-        SDL_Delay(500);
+        // SDL_Delay(5);
         t2 = high_resolution_clock::now();
         duration<double, std::milli> round_time = t2 - t1;
         round_times[r] = round_time.count();
@@ -85,6 +89,8 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "Total time was " << total_time << " ms\n";
+
+    SDL_Delay(10000);
 
     // Destroy SDL parameters
     SDL_DestroyRenderer(renderer);

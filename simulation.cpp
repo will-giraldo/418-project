@@ -10,9 +10,9 @@
 #include "SDL.h"
 #include "utils/vec2.h"
 
-#define TICKS_PER_SECOND 30.0
-// #define CLOCKS_PER_SEC 1000000
-#define CLOCKS_PER_TICK 1.0 / TICKS_PER_SECOND * CLOCKS_PER_SEC
+#define TICKS_PER_SECOND 300.0
+// #define CLOCKS_PER_TICK 1.0 / (TICKS_PER_SECOND * CLOCKS_PER_SEC)
+#define CLOCKS_PER_TICK (clock_t)(CLOCKS_PER_SEC / (TICKS_PER_SECOND))
 
 
 void Simulation::init() {
@@ -51,7 +51,7 @@ void Simulation::update() {
         if (agent->energy <= 0.) continue;
 
         // get closest uneaten food
-        Food* closest_food;
+        Food* closest_food = nullptr;
         double food_dist = INT_MAX;
         for(auto cfood : food) {
             if (!cfood->eaten && (cfood->pos - agent->pos).l2() < food_dist) {
@@ -61,56 +61,78 @@ void Simulation::update() {
         }
 
         // eat food if in range
-        if( (closest_food->pos - agent->pos).l2() < agent->size) {
+        if(closest_food && (closest_food->pos - agent->pos).l2() < agent->size + 2) {
             agent->eatFood(closest_food);
         }
 
 
         // get closest living agent
-        Agent *closest_agent;
+        Agent *closest_agent = nullptr;
         double agent_dist = INT_MAX;
         for(auto ag : agents) {
+            if(ag->pos == agent->pos) continue;
             if(ag->energy >= 0 && (ag->pos - agent->pos).l2() < agent_dist) {
                 closest_agent = ag;
                 agent_dist = (ag->pos - agent->pos).l2();
             }
         }
+
         // eat closest agent if possible
-        if(agent->canEat(closest_agent)) {
+        if(closest_agent && agent->canEat(closest_agent)) {
             agent->eatAgent(closest_agent);
 
             continue;
         } 
         
         // if closest agent can eat us then run
-        if(closest_agent->canEat(agent)) {
+        if(closest_agent && closest_agent->canEat(agent)) {
             Vec2 dir = agent->pos - closest_agent->pos;
             agent->moveDir(dir.toDir());
         }
         // if in vision range move towards closer target
-        else if(closest_agent->pos.l1() <= agent->vision || closest_food->pos.l1() <= agent->vision) {
-            if(agent_dist < food_dist) {
-                // move towards the agent
-                Vec2 dir = (closest_agent->pos - agent->pos).toDir();
-                agent->moveDir(dir);
-            } else {
-                // move towards the food
-                Vec2 dir = (closest_food->pos - agent->pos).toDir();
-                agent->moveDir(dir);
-            }
+        else if(closest_agent && (closest_agent->pos - agent->pos).l2() <= agent->vision && agent->canEat(closest_agent)) {
+            // move towards the agent
+            Vec2 dir = (closest_agent->pos - agent->pos).toDir();
+            agent->moveDir(dir);
+        } else if (closest_food && (closest_food->pos - agent->pos).l2() <= agent->vision) {
+            // move towards the food
+            Vec2 dir = (closest_food->pos - agent->pos).toDir();
+            agent->moveDir(dir);
         } else {
             // move in a random direction
-            agent->moveDir(agent->randomNextWeightedDir());
+            Vec2 dir = agent->randomNextWeightedDir();
+            agent->moveDir(dir);
         }
-            // out of bounds check & scroll over
-        if(agent->pos.x < 0) 
+
+        // if(closest_food && (closest_food->pos - agent->pos).l2() <= agent->vision) {
+        //      if(closest_food) {
+        //         // move towards the food
+        //         Vec2 dir = (closest_food->pos - agent->pos).toDir();
+        //         agent->moveDir(dir);
+        //     }
+        // } else {
+        //     // move in a random direction
+        //     Vec2 dir = agent->randomNextWeightedDir();
+        //     agent->moveDir(dir);
+        // }
+        
+        // out of bounds check & scroll over
+        if(agent->pos.x < 0) {
             agent->pos.x = width - 1;
-        if(agent->pos.x >= width) 
+            agent->oldPos = agent->pos;
+        }
+        if(agent->pos.x >= width) { 
             agent->pos.x = 0;
-        if(agent->pos.y < 0) 
+            agent->oldPos = agent->pos;
+        }
+        if(agent->pos.y < 0) {
             agent->pos.y = height - 1;
-        if(agent->pos.y >= height) 
+            agent->oldPos = agent->pos;
+        }
+        if(agent->pos.y >= height) {
             agent->pos.y = 0;
+            agent->oldPos = agent->pos;
+        }
     }    
 }
 
@@ -139,15 +161,16 @@ void Simulation::render() {
     }
     
     // Use food color
-    auto f = food[0];
-    SDL_SetRenderDrawColor(renderer, f->color.r, f->color.g, f->color.b, f->color.a);
-    for (auto f : food) {
-        f->render(renderer);
+    if (food.size() > 0) {
+        auto f = food[0];
+        SDL_SetRenderDrawColor(renderer, f->color.r, f->color.g, f->color.b, f->color.a);
+        for (auto f : food) {
+            f->render(renderer);
+        }
     }
 
     // Update screen
     SDL_RenderPresent(renderer);
-    SDL_Delay(1000);
 }
 
 void Simulation::runRound(int steps) {
@@ -160,6 +183,7 @@ void Simulation::runRound(int steps) {
         if (clock() > time) {
             time += CLOCKS_PER_TICK;
             update();
+            if(agents.size() == 0) return;
             render();
             stepsTaken++;
         }
@@ -205,7 +229,14 @@ void Simulation::resetFood() {
 void Simulation::finishRound() {
 
     // remove the agents which died (ran out of energy)
-    auto it = std::remove_if(agents.begin(), agents.end(), [](const Agent* agent) { return agent->energy < 0; });
+    // TODO because we used new, we need to deallocate deleted agents first with delete. 
+    for(int i = 0; i < agents.size(); i++) {
+        if(agents[i]->energy <= 0) {
+            delete agents[i];
+            agents[i] = nullptr;
+        }
+    }
+    auto it = std::remove_if(agents.begin(), agents.end(), [](const Agent* agent) { return !agent; });
     agents.erase(it, agents.end());
 
     // reserve twice the remaining amount (each living agent will duplicate)
@@ -219,7 +250,7 @@ void Simulation::finishRound() {
         agents[i]->resetEnergy();
 
         // get child of current agent, add to agent list
-        Agent* child = &(agents[i]->makeChild());
+        Agent* child = agents[i]->makeChild();
         agents.push_back(child);
 
     }

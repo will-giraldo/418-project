@@ -13,9 +13,9 @@
 
 
 #define SIZE 4.0
-#define VISION 5
-#define SPEED 1
-#define FOOD_VALUE 8 // amount of energy which food replenishes when eaten
+#define VISION 200
+#define SPEED 2
+#define FOOD_VALUE 30 // amount of energy which food replenishes when eaten
 
 
 class Simulation {

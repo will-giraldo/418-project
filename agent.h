@@ -3,17 +3,18 @@
 #include <random>
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
 #include "SDL.h"
 #include "food.h"
 #include "./utils/image.h"
 #include "./utils/vec2.h"
 
-#define ENERGY 10
+#define ENERGY 15
 #define EAT_THRESHOLD 1.2
-#define MUTATION_CHANCE .1
+#define MUTATION_CHANCE .3
 #define VAR_MOD .75 // modifier to get the variance for distribution
-#define OLD_PROB .4 // probability that we move in the same direction as last movement
+#define OLD_PROB .85 // probability that we move in the same direction as last movement
 
 
 class Agent {
@@ -23,7 +24,8 @@ public:
     int vision;
     int speed;
     Vec2 pos;
-    Vec2 oldPos; 
+    Vec2 oldPos;
+    bool hasEaten;
 
     Agent() {}
     Agent(double _size, int _vision, int _speed, int _x, int _y);
@@ -37,7 +39,7 @@ public:
     void eatFood(Food* food);
     void eatAgent(Agent* ag);
     void resetEnergy();
-    Agent makeChild();
+    Agent* makeChild();
     void setPosition(int _x, int _y);
 
 
@@ -57,13 +59,17 @@ public:
         std::random_device rd; 
         std::mt19937 gen(rd()); 
         std::uniform_real_distribution<> dis(0.0,1.0);
-        std::uniform_real_distribution<> ndis(-1.0,1.0);
+        std::uniform_int_distribution<> ndis(-1,1);
 
-        if(dis(gen) < OLD_PROB) {
+        if(pos != oldPos && dis(gen) < OLD_PROB) {
             return (pos - oldPos).toDir();
         } else {
-            int _x = (int) round(ndis(gen));
-            int _y = (int) round(ndis(gen));
+            int _x = 0;
+            int _y = 0;
+            while(_x == 0 && _y == 0) {
+                _x = ndis(gen);
+                _y = ndis(gen);
+            }
             return Vec2(_x, _y);
         }
     }
@@ -84,12 +90,12 @@ Agent::Agent(double _size, int _vision, int _speed, int _x, int _y) {
 }
 
 bool Agent::canEat(Agent* agent) {
-    return agent->energy >= 0 && size > EAT_THRESHOLD * agent->size && (pos - agent->pos).l2() < size;
+    return agent->energy > 0 && size > EAT_THRESHOLD * agent->size && (pos - agent->pos).l2() < (size + agent->size);
 }
 
 void Agent::reduceEnergy() {
     // TODO this will need tinkering to remove an appropriate amount of energy
-    energy -= (std::pow(size, 3.) * std::pow(speed, 2.) + ((double) vision)) / ENERGY;
+    energy -= (std::pow(size, 3.) * std::pow(speed, 2.) + ((double) vision)) / (ENERGY * 200);
 }
 
 void Agent::eatFood(Food* food) {
@@ -109,28 +115,29 @@ void Agent::resetEnergy() {
     energy = ENERGY;
 }
 
-Agent Agent::makeChild() {
-    Agent child(size, vision, speed, pos.x, pos.y);
+Agent* Agent::makeChild() {
+    Agent* child = new Agent(size, vision, speed, pos.x, pos.y);
 
     // randomly mutate parameters
     std::random_device rd; 
     std::mt19937 gen(rd()); 
     std::uniform_real_distribution<> dis(0.0,1.0);
 
+    // TODO change how new values are decided in mutation maybe choose from range like [0, 2*curval]
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate size
-        std::normal_distribution<> d(size, 3.); //TODO is this variance appropriate?
-        child.size = abs(d(gen));
+        std::uniform_int_distribution<> d(2, 2 * size); //TODO is this variance appropriate?
+        child->size = (int) std::round(abs(d(gen)));
     }
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate speed
-        std::normal_distribution<> d(speed, 3.); //TODO is this variance appropriate?
-        child.speed = (int) std::round(abs(d(gen)));
+        std::uniform_int_distribution<> d(2, 2 * speed); //TODO is this variance appropriate?
+        child->speed = (int) std::round(abs(d(gen)));
     }
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate vision
-        std::normal_distribution<> d(vision, 3.); //TODO is this variance appropriate?
-        child.vision = (int) std::round(abs(d(gen)));
+        std::uniform_int_distribution<> d(2, 2 * vision); //TODO is this variance appropriate?
+        child->vision = (int) std::round(abs(d(gen)));
     }
 
     return child;
@@ -148,6 +155,8 @@ void Agent::drawAgent(Image &I) {
 }
 
 int Agent::render(SDL_Renderer* renderer) {
+    if(energy <= 0 || pos == oldPos)  return 0;
+
     SDL_Rect rect;
     rect.x = pos.x;
     rect.y = pos.y;

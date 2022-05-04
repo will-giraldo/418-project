@@ -34,6 +34,8 @@ public:
 
 // Source: https://gist.github.com/Gumichan01/332c26f6197a432db91cc4327fcabb1c
 int Food::render(SDL_Renderer* renderer) {
+    if(eaten) return 0;
+
     SDL_Rect rect;
     rect.x = pos.x;
     rect.y = pos.y;
