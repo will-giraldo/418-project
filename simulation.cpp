@@ -138,22 +138,25 @@ void Simulation::render() {
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
     // Use agent color
-    auto a = agents[0];
-    SDL_SetRenderDrawColor(renderer, a->color.r, a->color.g, a->color.b, a->color.a);
-    for (auto a : agents) {
-        a->render(renderer);
+    if(agents.size()) {
+        auto a = agents[0];
+        SDL_SetRenderDrawColor(renderer, a->color.r, a->color.g, a->color.b, a->color.a);
+        for (auto a : agents) {
+            a->render(renderer);
+        }
     }
     
     // Use food color
-    auto f = food[0];
-    SDL_SetRenderDrawColor(renderer, f->color.r, f->color.g, f->color.b, f->color.a);
-    for (auto f : food) {
-        f->render(renderer);
+    if(food.size()) {
+        auto f = food[0];
+        SDL_SetRenderDrawColor(renderer, f->color.r, f->color.g, f->color.b, f->color.a);
+        for (auto f : food) {
+            f->render(renderer);
+        }
     }
 
     // Update screen
     SDL_RenderPresent(renderer);
-    SDL_Delay(1000);
 }
 
 void Simulation::runRound(int steps) {

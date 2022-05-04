@@ -35,7 +35,6 @@ int main(int argc, char* argv[]) {
 
     // Run simulation
     double total_time = 0.;
-    // sim.init();
     for(int r = 0; r < NUM_ROUNDS; r++) {
         std::cout << r << std::endl;
         t1 = high_resolution_clock::now();

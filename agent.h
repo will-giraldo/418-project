@@ -3,6 +3,7 @@
 #include <random>
 #include <cmath>
 #include <iostream>
+#include <algorithm>
 
 #include "SDL.h"
 #include "food.h"
@@ -26,13 +27,13 @@ public:
     Vec2 oldPos; 
 
     Agent() {}
-    Agent(double _size, int _vision, int _speed, int _x, int _y);
+    Agent(int _size, int _vision, int _speed, int _x, int _y);
 
     void reduceEnergy();
     bool canEat(Agent* agent);
 
     void drawAgent(Image &I);
-    int render(SDL_Renderer* renderer);
+    void render(SDL_Renderer* renderer);
     
     void eatFood(Food* food);
     void eatAgent(Agent* ag);
@@ -72,7 +73,7 @@ public:
 
 };
 
-Agent::Agent(double _size, int _vision, int _speed, int _x, int _y) {
+Agent::Agent(int _size, int _vision, int _speed, int _x, int _y) {
     // TODO maybe change initialization to be random over some range for these values
     size = _size;
     vision = _vision;
@@ -120,17 +121,20 @@ Agent Agent::makeChild() {
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate size
         std::normal_distribution<> d(size, 3.); //TODO is this variance appropriate?
-        child.size = abs(d(gen));
+        child.size = (int) std::round(abs(d(gen)));
+        // child.size = std::clamp((int) std::round(abs(d(gen))), 0, 2 * size);
     }
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate speed
         std::normal_distribution<> d(speed, 3.); //TODO is this variance appropriate?
         child.speed = (int) std::round(abs(d(gen)));
+        // child.speed = std::clamp((int) std::round(abs(d(gen))), 1, 2 * speed)
     }
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate vision
         std::normal_distribution<> d(vision, 3.); //TODO is this variance appropriate?
         child.vision = (int) std::round(abs(d(gen)));
+        // child.vision = std::clamp((int) std::round(abs(d(gen)), 0, 2 * vision);
     }
 
     return child;
@@ -147,7 +151,7 @@ void Agent::drawAgent(Image &I) {
 
 }
 
-int Agent::render(SDL_Renderer* renderer) {
+void Agent::render(SDL_Renderer* renderer) {
     SDL_Rect rect;
     rect.x = pos.x;
     rect.y = pos.y;
@@ -155,7 +159,7 @@ int Agent::render(SDL_Renderer* renderer) {
     rect.h = size * 5;
     SDL_RenderFillRect(renderer, &rect);
 
-    return 0;
+    return;
     // int x = pos.x;
     // int y = pos.y;
     // int offsetx, offsety, d;
@@ -198,5 +202,5 @@ int Agent::render(SDL_Renderer* renderer) {
     //     }
     // }
 
-    // return status;
+    // return;
 }

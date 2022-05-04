@@ -29,11 +29,12 @@ public:
     Color color = Color(100, 237, 132, 255);
     int radius = 1;
 
-    int render(SDL_Renderer* renderer);
+    void render(SDL_Renderer* renderer);
 };
 
 // Source: https://gist.github.com/Gumichan01/332c26f6197a432db91cc4327fcabb1c
-int Food::render(SDL_Renderer* renderer) {
+void Food::render(SDL_Renderer* renderer) {
+    if(!eaten) return;
     SDL_Rect rect;
     rect.x = pos.x;
     rect.y = pos.y;
@@ -41,8 +42,7 @@ int Food::render(SDL_Renderer* renderer) {
     rect.h = radius * 5;
     SDL_RenderFillRect(renderer, &rect);
 
-    return 0;
-
+    return;
     int x = pos.x;
     int y = pos.y;
     int offsetx, offsety, d;
@@ -84,6 +84,4 @@ int Food::render(SDL_Renderer* renderer) {
             offsetx += 1;
         }
     }
-
-    return status;
 }
