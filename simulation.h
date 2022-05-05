@@ -12,7 +12,7 @@
 #include "./utils/vec2.h"
 
 
-#define SIZE 4.0
+#define SIZE 4
 #define VISION 200
 #define SPEED 2
 #define FOOD_VALUE 30 // amount of energy which food replenishes when eaten
