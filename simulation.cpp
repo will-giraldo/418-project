@@ -1,8 +1,12 @@
 // // #pragmaonce
 
 #include <ctime>
+#include <cmath>
 #include <random>
+#include <iostream>
 #include <algorithm>
+#include <stdlib.h> 
+#include <cstdlib>
 #include <omp.h>
 
 #include "simulation.h"
@@ -133,9 +137,9 @@ void Simulation::update() {
         }
     }
 
-    for(auto agent : agents) {
-        agent->pos = agent->newPos;
-    }    
+    for (auto a : agents) {
+        a->newPos = a->pos;
+    }
 }
 
 void Simulation::render1(Image &I) {
@@ -188,7 +192,7 @@ void Simulation::runRound(int steps) {
             time += CLOCKS_PER_TICK;
             update();
             if(agents.size() == 0) return;
-            render();
+            if (isRender) render();
             stepsTaken++;
         }
     }
@@ -241,27 +245,99 @@ void Simulation::finishRound() {
             delete agents[i];
             agents[i] = nullptr;
         }
+        
+        // Increase numRounds
+        agents[i]->numRounds++;
     }
+
     auto it = std::remove_if(agents.begin(), agents.end(), [](const Agent* agent) { return !agent; });
     agents.erase(it, agents.end());
-
-    // reserve twice the remaining amount (each living agent will duplicate)
+    int oldSize = agents.size();
+    
+    // Reserve twice the remaining amount (each living agent will duplicate)
     agents.reserve(2 * agents.size());
 
-    // create new agents, and reset old agent values such as energy
-    int range = agents.size();
-    #pragma omp parallel for schedule(static)
-    for(int i = 0; i < range; i++) {
+    // Create new agents, and reset old agent values such as energy
+    if(allowCrossover || agents.size() > 1) {
+        // compute fitness scores
+        #pragma omp parallel for schedule(static) 
+        for(int i = 0; i < agents.size(); i++) {
+            agents[i]->computeFitnessScore();
+        }
 
-        // Reset current agents values
-        agents[i]->resetEnergy();
+        // Number of agents that will crossover and reproduce with another agent
+        int numFittestParents = (int) agents.size() / 4;
+        int numCrossovers = 0;
+        std::vector<int> visited(agents.size(), 0);
+        std::sort(agents.begin(), agents.end());
+        int startInd = agents.size() - 1;
+        int endInd = std::max(1, startInd - numFittestParents);
+        // TODO: figure out how to use rand_r if possible
+        // If not, remove private(seed)
+        unsigned seed;
+        #pragma omp parallel for schedule(static) private(seed) collapse(2)
+        for (int i = startInd; i >= endInd; i--) {
+            // Check if all other agents have already procreated
+            int allVisited = 1;
+            #pragma omp parallel for reduction(&& : allVisited)
+            for(int k = 0; k < startInd; k++) {
+                allVisited = allVisited && visited[k];
+            }
+            if (allVisited) break;
 
-        // Get child of current agent, add to agent list
-        Agent* child = agents[i]->makeChild();
-        // #pragma omp critical
-        {agents.push_back(child);}
-        // agents.push_back(child);
+            // Move onto next agent if we have already procreated with this agent
+            if (visited[i]) continue;
+            // Mark agent as visited
+            visited[i] = 1;
+            
+            // Generate random number
+            // TODO: check if it's safe in parallel
+            std::random_device rd; 
+            std::mt19937 gen(rd()); 
+            std::uniform_int_distribution<> d(0, i-1);
+
+            // Get agent that hasn't been visited 
+            #pragma omp critical
+            {int j;
+            while (true) {
+                int j = d(gen);
+                if (!visited[j]) break; 
+            }
+
+            // Perform crossover and child to agents vector
+            Agent* child = agents[i]->crossover(agents[j]);
+            agents.push_back(child);
+        
+            // Mark j as visited
+            visited[j] = true;}
+        }
+
+        // Reset current agents energy values
+        #pragma omp parallel for schedule(static)
+        for(int i = 0; i < agents.size(); i++) {
+            agents[i]->resetEnergy();
+        }
+
+    } else {
+        #pragma omp parallel for schedule(static)
+        for(int i = 0; i < agents.size(); i++) {
+
+            // Rest current agents energy values
+            agents[i]->resetEnergy();
+
+            // Get child of current agent, add to agent list
+            Agent* child = agents[i]->makeChild();
+            #pragma omp critical
+            {agents.push_back(child);}
+        }
     }
+
+    // Mutate newly created agents
+    #pragma omp parallel for schedule(static)
+    for(int i = oldSize; i < agents.size(); i++) {
+        agents[i]->mutate();
+    }
+
 
     // reset agent positions
     repositionAgents();
@@ -269,4 +345,3 @@ void Simulation::finishRound() {
     // reset food positions & eaten status
     resetFood();
 }
-

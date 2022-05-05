@@ -24,10 +24,12 @@ public:
     std::vector<Food*> food;
     int width;
     int height;
+    bool isRender;
+    bool allowCrossover = true;
     SDL_Window* window;
     SDL_Renderer* renderer; 
 
-    Simulation(int numAgents, int numFood, int _width, int _height);
+    Simulation(int numAgents, int numFood, int _width, int _height, bool _isRender=true);
 
     // Class functions
     // Initialize SDL renderer
@@ -59,11 +61,12 @@ public:
     void render1(Image &I);
 };
 
-Simulation::Simulation(int numAgents, int numFood, int _width, int _height) {
+Simulation::Simulation(int numAgents, int numFood, int _width, int _height, bool _isRender) {
     width = _width;
     height = _height;
     agents = std::vector<Agent*>(numAgents);
     food = std::vector<Food*>(numFood);
+    isRender = _isRender;
 
     // random number code from https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
     std::random_device rd; // obtain a random number from hardware

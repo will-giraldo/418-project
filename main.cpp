@@ -21,6 +21,12 @@ int main(int argc, char* argv[]) {
     for(int i = 0; i < 4; i++) {
         printf("Hello World %d... from thread = %d\n", i, omp_get_thread_num());
     }
+    double avg = 0;
+    #pragma omp parallel for reduction(+:avg) schedule(static)
+    for (int i = 0; i < 5; ++i) {
+        avg += i;
+    }
+
     
 
     // Timing setup

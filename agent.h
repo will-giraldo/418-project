@@ -27,20 +27,28 @@ public:
     Vec2 newPos;
     bool hasEaten;
     Vec2 lastMove;
+    double fitness;
+    int numRounds;
 
     Agent() {}
     Agent(int _size, int _vision, int _speed, int _x, int _y);
 
+    // Simulation round functions
     void reduceEnergy();
     bool canEat(Agent* agent);
-
-    void drawAgent(Image &I);
-    void render(SDL_Renderer* renderer);
-    
     void eatFood(Food* food);
     void eatAgent(Agent* ag);
     void resetEnergy();
+
+    // Rendering functions
+    void drawAgent(Image &I);
+    void render(SDL_Renderer* renderer);
+    
+    // Genetic functions
+    void computeFitnessScore();
     Agent* makeChild();
+    Agent* crossover(Agent* b);
+    void mutate();
     void setPosition(int _x, int _y);
 
 
@@ -76,6 +84,9 @@ public:
 
     Color color = Color(100, 150, 237, 255);
 
+    bool operator<(const Agent& b) {
+        return fitness < b.fitness;
+    }
 };
 
 Agent::Agent(int _size, int _vision, int _speed, int _x, int _y) {
@@ -86,8 +97,13 @@ Agent::Agent(int _size, int _vision, int _speed, int _x, int _y) {
     pos = Vec2(_x, _y);
     newPos = Vec2(_x, _y);
     lastMove = Vec2();
-
+    numRounds = 0;
     energy = ENERGY;
+}
+
+void Agent::setPosition(int _x, int _y) {
+    Vec2 _pos(_x, _y);
+    pos = _pos;
 }
 
 bool Agent::canEat(Agent* agent) {
@@ -111,43 +127,45 @@ void Agent::eatAgent(Agent* ag) {
     ag->energy = -1;
 }
 
-// TODO should this function also reset the position of all the agents to the edges
-void Agent::resetEnergy() {
-    energy = ENERGY;
+void Agent::computeFitnessScore() {
+    fitness = energy + numRounds;
 }
 
 Agent* Agent::makeChild() {
     Agent* child = new Agent(size, vision, speed, pos.x, pos.y);
+    return child;
+}
 
+Agent* Agent::crossover(Agent* b) {
+    return b;
+}
+
+void Agent::mutate() {
     // randomly mutate parameters
     std::random_device rd; 
     std::mt19937 gen(rd()); 
     std::uniform_real_distribution<> dis(0.0,1.0);
-
     // TODO change how new values are decided in mutation maybe choose from range like [0, 2*curval]
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate size
         std::uniform_int_distribution<> d(2, 2 * size); //TODO is this variance appropriate?
-        child->size = (int) std::round(abs(d(gen)));
+        size = (int) std::round(abs(d(gen)));
     }
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate speed
         std::uniform_int_distribution<> d(2, 2 * speed); //TODO is this variance appropriate?
-        child->speed = (int) std::round(abs(d(gen)));
+        speed = (int) std::round(abs(d(gen)));
     }
     if(dis(gen) < MUTATION_CHANCE) {
         // mutate vision
         std::uniform_int_distribution<> d(2, 2 * vision); //TODO is this variance appropriate?
-        child->vision = (int) std::round(abs(d(gen)));
+        vision = (int) std::round(abs(d(gen)));
     }
-
-    return child;
-
 }
 
-void Agent::setPosition(int _x, int _y) {
-    Vec2 _pos(_x, _y);
-    pos = _pos;
+// TODO should this function also reset the position of all the agents to the edges
+void Agent::resetEnergy() {
+    energy = ENERGY;
 }
 
 void Agent::drawAgent(Image &I) {
