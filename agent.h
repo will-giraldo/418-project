@@ -13,8 +13,8 @@
 #define ENERGY 15
 #define EAT_THRESHOLD 1.2
 #define MUTATION_CHANCE .3
-#define VAR_MOD .75 // modifier to get the variance for distribution
-#define OLD_PROB .85 // probability that we move in the same direction as last movement
+#define VAR_MOD .75 // Modifier to get the variance for distribution
+#define OLD_PROB .85 // Probability that we move in the same direction as last movement
 
 
 class Agent {
@@ -90,7 +90,6 @@ public:
 };
 
 Agent::Agent(int _size, int _vision, int _speed, int _x, int _y) {
-    // TODO maybe change initialization to be random over some range for these values
     size = _size;
     vision = _vision;
     speed = _speed;
@@ -123,7 +122,7 @@ void Agent::eatFood(Food* food) {
 
 void Agent::eatAgent(Agent* ag) {
     if(ag->energy < 0) std::cout << "Tried to eat dead agent\n";
-    energy += ENERGY; // ag->energy; // TODO how much energy should an agent get for eating another
+    energy += .7 * ENERGY + .1 * ag->energy + .2 * ag->size; 
     ag->energy = -1;
 }
 
@@ -136,8 +135,36 @@ Agent* Agent::makeChild() {
     return child;
 }
 
+// In this version of the genetic algorithm, we will be implementing uniform crossover
 Agent* Agent::crossover(Agent* b) {
-    return b;
+    int s;
+    double v;
+    int sp;
+    int x, y;
+
+    // Set pos values to 'this'.pos - they will be reset randomly so it doesn't matter
+    x = pos.x;
+    y = pos.y;
+
+    // Set up RNG 
+    std::random_device rd; 
+    std::mt19937 gen(rd()); 
+    std::uniform_real_distribution<> dis(0.0,1.0);
+
+    // Size
+    if (dis(gen) < 0.5) s = size;
+    else s = b->size;
+
+    // Vision
+    if (dis(gen) < 0.5) v = vision;
+    else v = b->vision;
+
+    // Speed
+    if (dis(gen) < 0.5) sp = speed;
+    else sp = b->speed;
+
+    Agent* child = new Agent(s, v, sp, x, y);
+    return child;
 }
 
 void Agent::mutate() {
@@ -145,25 +172,24 @@ void Agent::mutate() {
     std::random_device rd; 
     std::mt19937 gen(rd()); 
     std::uniform_real_distribution<> dis(0.0,1.0);
-    // TODO change how new values are decided in mutation maybe choose from range like [0, 2*curval]
     if(dis(gen) < MUTATION_CHANCE) {
-        // mutate size
-        std::uniform_int_distribution<> d(2, 2 * size); //TODO is this variance appropriate?
+        // Mutate size
+        std::uniform_int_distribution<> d(2, 2 * size); 
         size = (int) std::round(abs(d(gen)));
     }
     if(dis(gen) < MUTATION_CHANCE) {
-        // mutate speed
-        std::uniform_int_distribution<> d(2, 2 * speed); //TODO is this variance appropriate?
+        // Mutate speed
+        std::uniform_int_distribution<> d(1, 1.5 * speed); 
         speed = (int) std::round(abs(d(gen)));
     }
     if(dis(gen) < MUTATION_CHANCE) {
-        // mutate vision
-        std::uniform_int_distribution<> d(2, 2 * vision); //TODO is this variance appropriate?
+        // Mutate vision
+        std::uniform_int_distribution<> d(2, 2 * vision); 
         vision = (int) std::round(abs(d(gen)));
     }
 }
 
-// TODO should this function also reset the position of all the agents to the edges
+
 void Agent::resetEnergy() {
     energy = ENERGY;
 }
@@ -175,6 +201,7 @@ void Agent::drawAgent(Image &I) {
 void Agent::render(SDL_Renderer* renderer) {
     if(energy <= 0)  return;
 
+    // Rectangle
     SDL_Rect rect;
     rect.x = pos.x;
     rect.y = pos.y;
@@ -182,7 +209,55 @@ void Agent::render(SDL_Renderer* renderer) {
     rect.h = size * 5;
     SDL_RenderFillRect(renderer, &rect);
 
-    return;
+    // return;
+
+    // // Fill circle
+    // int x = pos.x;
+    // int y = pos.y;
+    // int offsetx, offsety, d;
+    // int status;
+    // int radius, scaleFactor; 
+    
+    // scaleFactor = 5;
+    // radius = scaleFactor * size;
+    // offsetx = 0;
+    // offsety = radius;
+    // d = radius -1;
+    // status = 0;
+
+    // while (offsety >= offsetx) {
+
+    //     status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx,
+    //                                  x + offsety, y + offsetx);
+    //     status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety,
+    //                                  x + offsetx, y + offsety);
+    //     status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety,
+    //                                  x + offsetx, y - offsety);
+    //     status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx,
+    //                                  x + offsety, y - offsetx);
+
+    //     if (status < 0) {
+    //         status = -1;
+    //         break;
+    //     }
+
+    //     if (d >= 2*offsetx) {
+    //         d -= 2*offsetx + 1;
+    //         offsetx +=1;
+    //     }
+    //     else if (d < 2 * (radius - offsety)) {
+    //         d += 2 * offsety - 1;
+    //         offsety -= 1;
+    //     }
+    //     else {
+    //         d += 2 * (offsety - offsetx - 1);
+    //         offsety -= 1;
+    //         offsetx += 1;
+    //     }
+    // }
+
+
+    // Circle
     // int x = pos.x;
     // int y = pos.y;
     // int offsetx, offsety, d;

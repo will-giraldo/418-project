@@ -14,12 +14,16 @@
 #include "utils/vec2.h"
 
 #define TICKS_PER_SECOND 300.0
-// #define CLOCKS_PER_TICK 1.0 / (TICKS_PER_SECOND * CLOCKS_PER_SEC)
 #define CLOCKS_PER_TICK (clock_t)(CLOCKS_PER_SEC / (TICKS_PER_SECOND))
 #define NUM_THREADS 4
 
 
 void Simulation::init() {
+    // Set numthreads
+    omp_set_num_threads(NUM_THREADS);
+
+    if (!isRender) return;
+
     SDL_Init(SDL_INIT_VIDEO);
 
     // Create window
@@ -45,12 +49,9 @@ void Simulation::init() {
         renderer = rend;
 
         // Set renderer to blank canvas
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_SetRenderDrawColor(renderer, 0,0,0, 255);
         SDL_RenderClear(renderer);
         SDL_RenderPresent(renderer);
-
-        // Set numthreads
-        omp_set_num_threads(NUM_THREADS);
     }
 }
 
@@ -73,7 +74,7 @@ void Simulation::update() {
         //     return adist < bdist ? a : b;
         // };
 
-        // #pragma omp declare reduction (foodRed:Food*:omp_out=fdcmp(omp_out,omp_in)) initializer (omp_priv=omp_orig)
+        // #pragma omp declare reduction (foodRed:Food*:omp_out=foodComp(omp_out,omp_in)) initializer (omp_priv=omp_orig)
 
         // get closest uneaten food
         Food* closest_food = nullptr;
@@ -167,7 +168,7 @@ void Simulation::render1(Image &I) {
 }
 
 void Simulation::render() {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
     // Use agent color
@@ -199,7 +200,7 @@ void Simulation::runRound(int steps) {
 
     // execute loop code TICKS_PER_SECOND times per second
     while(stepsTaken < steps) {
-        if (clock() > time) {
+        if (!isRender || clock() > time) {
             time += CLOCKS_PER_TICK;
             update();
             if(agents.size() == 0) return;
@@ -247,7 +248,6 @@ void Simulation::resetFood() {
 // currently no genetic algorithm, will simply propogate agents that survive, 
 // with a chance of mutation for their offspring. 
 void Simulation::finishRound() {
-
     // remove the agents which died (ran out of energy)
     // TODO because we used new, we need to deallocate deleted agents first with delete. 
     #pragma omp parallel for schedule(static)
@@ -255,43 +255,43 @@ void Simulation::finishRound() {
         if(agents[i]->energy <= 0) {
             delete agents[i];
             agents[i] = nullptr;
+        } else {
+            // Increase numRounds
+            agents[i]->numRounds++;
         }
-        
-        // Increase numRounds
-        agents[i]->numRounds++;
     }
 
     auto it = std::remove_if(agents.begin(), agents.end(), [](const Agent* agent) { return !agent; });
     agents.erase(it, agents.end());
-    int oldSize = agents.size();
-    
+    int agentsSize = agents.size();
+
+    // std::cout << "before crossover: " << agents.size() << std::endl; 
     // Reserve twice the remaining amount (each living agent will duplicate)
     agents.reserve(2 * agents.size());
 
     // Create new agents, and reset old agent values such as energy
-    if(allowCrossover || agents.size() > 1) {
+    if(allowCrossover && agents.size() > 1) {
         // compute fitness scores
         #pragma omp parallel for schedule(static) 
         for(int i = 0; i < agents.size(); i++) {
             agents[i]->computeFitnessScore();
         }
-
+        
         // Number of agents that will crossover and reproduce with another agent
         int numFittestParents = (int) agents.size() / 4;
-        int numCrossovers = 0;
-        std::vector<int> visited(agents.size(), 0);
+        std::vector<bool> visited(agents.size(), false);
         std::sort(agents.begin(), agents.end());
         int startInd = agents.size() - 1;
         int endInd = std::max(1, startInd - numFittestParents);
         // TODO: figure out how to use rand_r if possible
         // If not, remove private(seed)
         unsigned seed;
-        #pragma omp parallel for schedule(static) private(seed) collapse(2)
+        #pragma omp parallel for schedule(static) private(seed) 
         for (int i = startInd; i >= endInd; i--) {
             // Check if all other agents have already procreated
-            int allVisited = 1;
-            #pragma omp parallel for reduction(&& : allVisited)
-            for(int k = 0; k < startInd; k++) {
+            int allVisited = true;
+
+            for(int k = 0; k <= startInd; k++) {
                 allVisited = allVisited && visited[k];
             }
             if (allVisited) break;
@@ -311,7 +311,7 @@ void Simulation::finishRound() {
             #pragma omp critical
             {int j;
             while (true) {
-                int j = d(gen);
+                j = d(gen);
                 if (!visited[j]) break; 
             }
 
@@ -323,18 +323,9 @@ void Simulation::finishRound() {
             visited[j] = true;}
         }
 
-        // Reset current agents energy values
-        #pragma omp parallel for schedule(static)
-        for(int i = 0; i < agents.size(); i++) {
-            agents[i]->resetEnergy();
-        }
-
     } else {
         #pragma omp parallel for schedule(static)
-        for(int i = 0; i < agents.size(); i++) {
-
-            // Rest current agents energy values
-            agents[i]->resetEnergy();
+        for(int i = 0; i < agentsSize; i++) {
 
             // Get child of current agent, add to agent list
             Agent* child = agents[i]->makeChild();
@@ -343,12 +334,14 @@ void Simulation::finishRound() {
         }
     }
 
-    // Mutate newly created agents
-    #pragma omp parallel for schedule(static)
-    for(int i = oldSize; i < agents.size(); i++) {
-        agents[i]->mutate();
-    }
+    // std::cout << "after crossover: " << agents.size() << std::endl; 
 
+    // Mutate newly created agents and reset energy
+    #pragma omp parallel for schedule(static)
+    for(int i = agentsSize; i < agents.size(); i++) {
+        agents[i]->mutate();
+        agents[i]->resetEnergy();
+    }
 
     // reset agent positions
     repositionAgents();

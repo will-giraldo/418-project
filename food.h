@@ -36,35 +36,40 @@ public:
 void Food::render(SDL_Renderer* renderer) {
     if(eaten) return;
 
-    SDL_Rect rect;
-    rect.x = pos.x;
-    rect.y = pos.y;
-    rect.w = radius * 5;
-    rect.h = radius * 5;
-    SDL_RenderFillRect(renderer, &rect);
+    // SDL_Rect rect;
+    // rect.x = pos.x;
+    // rect.y = pos.y;
+    // rect.w = radius * 5;
+    // rect.h = radius * 5;
+    // SDL_RenderFillRect(renderer, &rect);
 
-    return;
+    // return;
+
+
+
+    // Draw and fill circle code
     int x = pos.x;
     int y = pos.y;
     int offsetx, offsety, d;
     int status;
+    int scaleFactor;
 
-    // CHECK_RENDERER_MAGIC(renderer, -1);
-
+    scaleFactor = 4;
     offsetx = 0;
-    offsety = radius;
-    d = radius*20 -1;
+    offsety = radius * scaleFactor;
+    d = radius * scaleFactor -1;
     status = 0;
 
     while (offsety >= offsetx) {
-        status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
-        status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
-        status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
-        status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
-        status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
-        status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
-        status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
-        status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
+
+        status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx,
+                                     x + offsety, y + offsetx);
+        status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety,
+                                     x + offsetx, y + offsety);
+        status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety,
+                                     x + offsetx, y - offsety);
+        status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx,
+                                     x + offsety, y - offsetx);
 
         if (status < 0) {
             status = -1;
@@ -75,7 +80,7 @@ void Food::render(SDL_Renderer* renderer) {
             d -= 2*offsetx + 1;
             offsetx +=1;
         }
-        else if (d < 2 * (radius - offsety)) {
+        else if (d < 2 * (radius * scaleFactor - offsety)) {
             d += 2 * offsety - 1;
             offsety -= 1;
         }
@@ -85,4 +90,49 @@ void Food::render(SDL_Renderer* renderer) {
             offsetx += 1;
         }
     }
+
+    return;
+
+    // Draw circle code 
+    // int x = pos.x;
+    // int y = pos.y;
+    // int offsetx, offsety, d;
+    // int status;
+
+    // CHECK_RENDERER_MAGIC(renderer, -1);
+
+    // offsetx = 0;
+    // offsety = radius;
+    // d = radius*20 -1;
+    // status = 0;
+
+    // while (offsety >= offsetx) {
+    //     status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
+    //     status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
+    //     status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
+    //     status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
+    //     status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
+    //     status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
+    //     status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
+    //     status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
+
+    //     if (status < 0) {
+    //         status = -1;
+    //         break;
+    //     }
+
+    //     if (d >= 2*offsetx) {
+    //         d -= 2*offsetx + 1;
+    //         offsetx +=1;
+    //     }
+    //     else if (d < 2 * (radius - offsety)) {
+    //         d += 2 * offsety - 1;
+    //         offsety -= 1;
+    //     }
+    //     else {
+    //         d += 2 * (offsety - offsetx - 1);
+    //         offsety -= 1;
+    //         offsetx += 1;
+    //     }
+    // }
 }

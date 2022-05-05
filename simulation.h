@@ -13,7 +13,7 @@
 
 
 #define SIZE 4
-#define VISION 200
+#define VISION 150
 #define SPEED 2
 #define FOOD_VALUE 30 // amount of energy which food replenishes when eaten
 

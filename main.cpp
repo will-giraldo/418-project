@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     for(int r = 0; r < NUM_ROUNDS; r++) {
         if (sim.agents.size() == 0) break;
         // std::cout << r << std::endl;
-        std::cout << sim.agents.size() << std::endl;
+        // stdgit a::cout << sim.agents.size() << std::endl;
         t1 = high_resolution_clock::now();
 
         sim.runRound(STEPS_PER_ROUND);
