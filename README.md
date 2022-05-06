@@ -1,5 +1,25 @@
 # Parallelizing Natural Selection Simulation  -- Hridayesh Joshi (hvj), William Giraldo (wgiraldo)
 
+## Reports
+[Final Report](https://github.com/will-giraldo/418-project/blob/main/writeup/418_final_report.pdf)
+
+[Final Video Recording](https://github.com/will-giraldo/418-project/blob/main/writeup/screen-capture.webm)
+
+## Building and Running
+Note that rendering will only work on a Windows system.
+To build the project execute the following commands from the terminal in the project directory:
+```
+mkdir build
+cd ./build
+cmake ..
+cmake --build .
+```
+The executable will then be built in the ```./Debug/``` directory. To run execute (on Windows for example):
+```
+.\build\Debug\NaturalSelection.exe
+```
+Notes:
+Rendering only works on Windows. The program can run on other OS's, but rendering must be disabled in the source by switching the IS_RENDER in main.cpp to false. There is also a slight bug, if the rendering window loses focus, the program will crash, and must be restarted.
 
 ## Summary
 For our final project we are going to be constructing and parallelizing a simulation of natural selection, with the goal of creating a more complex simulation which will iterate and converge to more optimal solutions as fast as possible. Our work will consist of finding axises of parallelism on which to speed up computation, as well as ensuring that the simulated agents can all be run in parallel and interact with each other while maintaining the integrity of the solution/simulation. We will be implementing simulations primarily on the CPU using OpenMP, and time allowing create a GPU implementation to compare performance with. 
