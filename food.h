@@ -11,6 +11,7 @@ public:
     Vec2 pos;
     bool eaten;
     int value;
+    int renderShape = 1;
 
     Food () {}
     
@@ -34,105 +35,104 @@ public:
 
 // Source: https://gist.github.com/Gumichan01/332c26f6197a432db91cc4327fcabb1c
 void Food::render(SDL_Renderer* renderer) {
-    if(eaten) return;
+    if (eaten) return;
+    
+    // Rectangle 
+    if (renderShape == 0) {
+        SDL_Rect rect;
+        rect.x = pos.x;
+        rect.y = pos.y;
+        rect.w = radius * 5;
+        rect.h = radius * 5;
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    // Fill circle
+    else if (renderShape == 1) {
+        int x = pos.x;
+        int y = pos.y;
+        int offsetx, offsety, d;
+        int status;
+        int scaleFactor;
 
-    // SDL_Rect rect;
-    // rect.x = pos.x;
-    // rect.y = pos.y;
-    // rect.w = radius * 5;
-    // rect.h = radius * 5;
-    // SDL_RenderFillRect(renderer, &rect);
+        scaleFactor = 4;
+        offsetx = 0;
+        offsety = radius * scaleFactor;
+        d = radius * scaleFactor -1;
+        status = 0;
 
-    // return;
+        while (offsety >= offsetx) {
 
+            status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx,
+                                        x + offsety, y + offsetx);
+            status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety,
+                                        x + offsetx, y + offsety);
+            status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety,
+                                        x + offsetx, y - offsety);
+            status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx,
+                                        x + offsety, y - offsetx);
 
+            if (status < 0) {
+                status = -1;
+                break;
+            }
 
-    // Draw and fill circle code
-    int x = pos.x;
-    int y = pos.y;
-    int offsetx, offsety, d;
-    int status;
-    int scaleFactor;
-
-    scaleFactor = 4;
-    offsetx = 0;
-    offsety = radius * scaleFactor;
-    d = radius * scaleFactor -1;
-    status = 0;
-
-    while (offsety >= offsetx) {
-
-        status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx,
-                                     x + offsety, y + offsetx);
-        status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety,
-                                     x + offsetx, y + offsety);
-        status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety,
-                                     x + offsetx, y - offsety);
-        status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx,
-                                     x + offsety, y - offsetx);
-
-        if (status < 0) {
-            status = -1;
-            break;
-        }
-
-        if (d >= 2*offsetx) {
-            d -= 2*offsetx + 1;
-            offsetx +=1;
-        }
-        else if (d < 2 * (radius * scaleFactor - offsety)) {
-            d += 2 * offsety - 1;
-            offsety -= 1;
-        }
-        else {
-            d += 2 * (offsety - offsetx - 1);
-            offsety -= 1;
-            offsetx += 1;
+            if (d >= 2*offsetx) {
+                d -= 2*offsetx + 1;
+                offsetx +=1;
+            }
+            else if (d < 2 * (radius * scaleFactor - offsety)) {
+                d += 2 * offsety - 1;
+                offsety -= 1;
+            }
+            else {
+                d += 2 * (offsety - offsetx - 1);
+                offsety -= 1;
+                offsetx += 1;
+            }
         }
     }
+    // Circle
+    else {
+        int x = pos.x;
+        int y = pos.y;
+        int offsetx, offsety, d;
+        int status;
 
-    return;
+        CHECK_RENDERER_MAGIC(renderer, -1);
 
-    // Draw circle code 
-    // int x = pos.x;
-    // int y = pos.y;
-    // int offsetx, offsety, d;
-    // int status;
+        offsetx = 0;
+        offsety = radius;
+        d = radius*20 -1;
+        status = 0;
 
-    // CHECK_RENDERER_MAGIC(renderer, -1);
+        while (offsety >= offsetx) {
+            status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
+            status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
+            status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
+            status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
+            status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
+            status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
+            status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
+            status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
 
-    // offsetx = 0;
-    // offsety = radius;
-    // d = radius*20 -1;
-    // status = 0;
+            if (status < 0) {
+                status = -1;
+                break;
+            }
 
-    // while (offsety >= offsetx) {
-    //     status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
-    //     status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
-    //     status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
-    //     status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
-    //     status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
-    //     status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
-    //     status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
-    //     status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
-
-    //     if (status < 0) {
-    //         status = -1;
-    //         break;
-    //     }
-
-    //     if (d >= 2*offsetx) {
-    //         d -= 2*offsetx + 1;
-    //         offsetx +=1;
-    //     }
-    //     else if (d < 2 * (radius - offsety)) {
-    //         d += 2 * offsety - 1;
-    //         offsety -= 1;
-    //     }
-    //     else {
-    //         d += 2 * (offsety - offsetx - 1);
-    //         offsety -= 1;
-    //         offsetx += 1;
-    //     }
-    // }
+            if (d >= 2*offsetx) {
+                d -= 2*offsetx + 1;
+                offsetx +=1;
+            }
+            else if (d < 2 * (radius - offsety)) {
+                d += 2 * offsety - 1;
+                offsety -= 1;
+            }
+            else {
+                d += 2 * (offsety - offsetx - 1);
+                offsety -= 1;
+                offsetx += 1;
+            }
+        }
+    }
 }

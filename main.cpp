@@ -8,10 +8,11 @@
 #include "simulation.cpp"
 #include "SDL.h"
 
-#define WIDTH 700
-#define HEIGHT 700
-#define NUM_ROUNDS 5000
-#define STEPS_PER_ROUND 400
+#define WIDTH 1000
+#define HEIGHT 1000
+#define NUM_ROUNDS 10
+#define STEPS_PER_ROUND 50
+#define NUM_THREADS 16
 
 
 int main(int argc, char* argv[]) {
@@ -20,40 +21,61 @@ int main(int argc, char* argv[]) {
     using std::chrono::duration_cast;
     using std::chrono::duration;
     using std::chrono::milliseconds;
+    std::vector<double> run_round_times(NUM_ROUNDS, 0.);
+    std::vector<double> finish_round_times(NUM_ROUNDS, 0.);
     std::vector<double> round_times(NUM_ROUNDS, 0.);
     
-
     // Initialize simulation
-    int numAgents = 12;
-    int numFood = 20;
+    int numAgents = NUM_AGENTS;
+    int numFood = NUM_FOOD;
     auto t1 = high_resolution_clock::now();
-    Simulation sim(numAgents, numFood, WIDTH, HEIGHT);
-    sim.init();
+    Simulation sim(numAgents, numFood, WIDTH, HEIGHT, false);
+    sim.init(NUM_THREADS);
+    
 
     // Initialize clock
     auto t2 = high_resolution_clock::now();
     duration<double, std::milli> construct_time = t2 - t1;
 
     // Run simulation
+    double run_time = 0.;
+    double finish_time = 0.;
     double total_time = 0.;
     for(int r = 0; r < NUM_ROUNDS; r++) {
+
         if (sim.agents.size() == 0) break;
-        // std::cout << r << std::endl;
-        // stdgit a::cout << sim.agents.size() << std::endl;
+
         t1 = high_resolution_clock::now();
 
         sim.runRound(STEPS_PER_ROUND);
+        
+        // Run round time
+        auto t3 = high_resolution_clock::now();
+        duration<double, std::milli> run_round_time = t3 - t1;
+        run_round_times[r] = run_round_time.count();
+        run_time += run_round_times[r];
+
         sim.finishRound();
 
+        // Finish round time
+        auto t4 = high_resolution_clock::now();
+        duration<double, std::milli> finish_round_time = t4 - t3;
+        finish_round_times[r] = finish_round_time.count();
+        finish_time += finish_round_times[r];
+
+        // Total round time 
         t2 = high_resolution_clock::now();
         duration<double, std::milli> round_time = t2 - t1;
         round_times[r] = round_time.count();
         total_time += round_times[r];
+
     }
 
-    std::cout << "Total time was " << total_time << " ms\n";
+    // Print out run times of algorithm's components
+    std::cout << "Run time: " << run_time << " ms\n";
+    std::cout << "Finish time: " << finish_time << " ms\n";
+    std::cout << "Total time: " << total_time << "ms\n";
 
-    SDL_Delay(5000);
 
     // Destroy SDL parameters
     sim.destroy();

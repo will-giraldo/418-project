@@ -33,7 +33,7 @@ public:
 
     // Class functions
     // Initialize SDL renderer
-    void init();
+    void init(int num_threads);
 
     // Update agent parameters based on position change and food consumption
     void update();
@@ -59,6 +59,10 @@ public:
     // Old renderer
     Image I;
     void render1(Image &I);
+
+    // For runtime 
+    double closestATime;
+    double closestFTime;
 };
 
 Simulation::Simulation(int numAgents, int numFood, int _width, int _height, bool _isRender) {
@@ -86,4 +90,7 @@ Simulation::Simulation(int numAgents, int numFood, int _width, int _height, bool
         Food *fd = new Food(Vec2(Wdistr(gen), Hdistr(gen)), FOOD_VALUE);
         food[i] = fd;
     }
+
+    closestATime = 0.;
+    closestFTime = 0.;
 }

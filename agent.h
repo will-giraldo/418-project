@@ -82,6 +82,8 @@ public:
         }
     }
 
+    // For rendering
+    int renderShape = 0;
     Color color = Color(100, 150, 237, 255);
 
     bool operator<(const Agent& b) {
@@ -111,7 +113,7 @@ bool Agent::canEat(Agent* agent) {
 
 void Agent::reduceEnergy() {
     // TODO this will need tinkering to remove an appropriate amount of energy
-    energy -= (std::pow(size, 2.) + std::pow(speed, 2.) + ((double) vision)) / (ENERGY * 200);
+    energy -= (std::pow(size, 2.) * std::pow(speed, 2.) + ((double) vision)) / (ENERGY * 200);
 }
 
 void Agent::eatFood(Food* food) {
@@ -121,7 +123,7 @@ void Agent::eatFood(Food* food) {
 }
 
 void Agent::eatAgent(Agent* ag) {
-    if(ag->energy < 0) std::cout << "Tried to eat dead agent\n";
+    if(ag->energy < 0) return;
     energy += .7 * ENERGY + .1 * ag->energy + .2 * ag->size; 
     ag->energy = -1;
 }
@@ -198,107 +200,106 @@ void Agent::drawAgent(Image &I) {
 
 }
 
+// Source: https://gist.github.com/Gumichan01/332c26f6197a432db91cc4327fcabb1c
 void Agent::render(SDL_Renderer* renderer) {
-    if(energy <= 0)  return;
+    if (energy <= 0)  return;
 
     // Rectangle
-    SDL_Rect rect;
-    rect.x = pos.x;
-    rect.y = pos.y;
-    rect.w = size * 5;
-    rect.h = size * 5;
-    SDL_RenderFillRect(renderer, &rect);
+    if (renderShape == 0) {
+        SDL_Rect rect;
+        rect.x = pos.x;
+        rect.y = pos.y;
+        rect.w = size * 5;
+        rect.h = size * 5;
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    // Fill circle
+    else if (renderShape == 1) {
+        int x = pos.x;
+        int y = pos.y;
+        int offsetx, offsety, d;
+        int status;
+        int radius, scaleFactor; 
+        
+        scaleFactor = 5;
+        radius = scaleFactor * size;
+        offsetx = 0;
+        offsety = radius;
+        d = radius -1;
+        status = 0;
 
-    // return;
+        while (offsety >= offsetx) {
 
-    // // Fill circle
-    // int x = pos.x;
-    // int y = pos.y;
-    // int offsetx, offsety, d;
-    // int status;
-    // int radius, scaleFactor; 
-    
-    // scaleFactor = 5;
-    // radius = scaleFactor * size;
-    // offsetx = 0;
-    // offsety = radius;
-    // d = radius -1;
-    // status = 0;
+            status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx,
+                                        x + offsety, y + offsetx);
+            status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety,
+                                        x + offsetx, y + offsety);
+            status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety,
+                                        x + offsetx, y - offsety);
+            status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx,
+                                        x + offsety, y - offsetx);
 
-    // while (offsety >= offsetx) {
+            if (status < 0) {
+                status = -1;
+                break;
+            }
 
-    //     status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx,
-    //                                  x + offsety, y + offsetx);
-    //     status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety,
-    //                                  x + offsetx, y + offsety);
-    //     status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety,
-    //                                  x + offsetx, y - offsety);
-    //     status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx,
-    //                                  x + offsety, y - offsetx);
-
-    //     if (status < 0) {
-    //         status = -1;
-    //         break;
-    //     }
-
-    //     if (d >= 2*offsetx) {
-    //         d -= 2*offsetx + 1;
-    //         offsetx +=1;
-    //     }
-    //     else if (d < 2 * (radius - offsety)) {
-    //         d += 2 * offsety - 1;
-    //         offsety -= 1;
-    //     }
-    //     else {
-    //         d += 2 * (offsety - offsetx - 1);
-    //         offsety -= 1;
-    //         offsetx += 1;
-    //     }
-    // }
-
-
+            if (d >= 2*offsetx) {
+                d -= 2*offsetx + 1;
+                offsetx +=1;
+            }
+            else if (d < 2 * (radius - offsety)) {
+                d += 2 * offsety - 1;
+                offsety -= 1;
+            }
+            else {
+                d += 2 * (offsety - offsetx - 1);
+                offsety -= 1;
+                offsetx += 1;
+            }
+        }
+    }
     // Circle
-    // int x = pos.x;
-    // int y = pos.y;
-    // int offsetx, offsety, d;
-    // int status;
+    else {
+        int x = pos.x;
+        int y = pos.y;
+        int offsetx, offsety, d;
+        int status;
 
-    // // CHECK_RENDERER_MAGIC(renderer, -1);
+        // CHECK_RENDERER_MAGIC(renderer, -1);
 
-    // offsetx = 0;
-    // offsety = size;
-    // d = size -1;
-    // status = 0;
+        offsetx = 0;
+        offsety = size;
+        d = size -1;
+        status = 0;
 
-    // while (offsety >= offsetx) {
-    //     status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
-    //     status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
-    //     status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
-    //     status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
-    //     status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
-    //     status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
-    //     status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
-    //     status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
+        while (offsety >= offsetx) {
+            status += SDL_RenderDrawPoint(renderer, x + offsetx, y + offsety);
+            status += SDL_RenderDrawPoint(renderer, x + offsety, y + offsetx);
+            status += SDL_RenderDrawPoint(renderer, x - offsetx, y + offsety);
+            status += SDL_RenderDrawPoint(renderer, x - offsety, y + offsetx);
+            status += SDL_RenderDrawPoint(renderer, x + offsetx, y - offsety);
+            status += SDL_RenderDrawPoint(renderer, x + offsety, y - offsetx);
+            status += SDL_RenderDrawPoint(renderer, x - offsetx, y - offsety);
+            status += SDL_RenderDrawPoint(renderer, x - offsety, y - offsetx);
 
-    //     if (status < 0) {
-    //         status = -1;
-    //         break;
-    //     }
+            if (status < 0) {
+                status = -1;
+                break;
+            }
 
-    //     if (d >= 2*offsetx) {
-    //         d -= 2*offsetx + 1;
-    //         offsetx +=1;
-    //     }
-    //     else if (d < 2 * (size - offsety)) {
-    //         d += 2 * offsety - 1;
-    //         offsety -= 1;
-    //     }
-    //     else {
-    //         d += 2 * (offsety - offsetx - 1);
-    //         offsety -= 1;
-    //         offsetx += 1;
-    //     }
-    // }
-
-    // return;
+            if (d >= 2*offsetx) {
+                d -= 2*offsetx + 1;
+                offsetx +=1;
+            }
+            else if (d < 2 * (size - offsety)) {
+                d += 2 * offsety - 1;
+                offsety -= 1;
+            }
+            else {
+                d += 2 * (offsety - offsetx - 1);
+                offsety -= 1;
+                offsetx += 1;
+            }
+        }
 }
