@@ -8,11 +8,13 @@
 #include "simulation.cpp"
 #include "SDL.h"
 
-#define WIDTH 1000
-#define HEIGHT 1000
-#define NUM_ROUNDS 10
-#define STEPS_PER_ROUND 50
-#define NUM_THREADS 16
+
+#define WIDTH 700
+#define HEIGHT 700
+#define NUM_ROUNDS 5000
+#define STEPS_PER_ROUND 400
+#define IS_RENDER true
+
 
 
 int main(int argc, char* argv[]) {
@@ -29,9 +31,9 @@ int main(int argc, char* argv[]) {
     int numAgents = NUM_AGENTS;
     int numFood = NUM_FOOD;
     auto t1 = high_resolution_clock::now();
-    Simulation sim(numAgents, numFood, WIDTH, HEIGHT, false);
-    sim.init(NUM_THREADS);
-    
+
+    Simulation sim(numAgents, numFood, WIDTH, HEIGHT, IS_RENDER);
+    sim.init();
 
     // Initialize clock
     auto t2 = high_resolution_clock::now();
