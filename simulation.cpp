@@ -1,10 +1,13 @@
-#include <ctime>
 #include <cmath>
+#include <climits> 
+#include <ctime>
+#include <chrono>
 #include <random>
 #include <iostream>
 #include <algorithm>
 #include <stdlib.h> 
 #include <cstdlib>
+#include <stdio.h>
 #include <omp.h>
 
 #include "simulation.h"
@@ -15,12 +18,12 @@
 
 #define TICKS_PER_SECOND 300.0
 #define CLOCKS_PER_TICK (clock_t)(CLOCKS_PER_SEC / (TICKS_PER_SECOND))
-#define NUM_THREADS 4
+#define NUM_AGENTS 500
+#define NUM_FOOD 700
 
-
-void Simulation::init() {
+void Simulation::init(int num_threads) {
     // Set numthreads
-    omp_set_num_threads(NUM_THREADS);
+    omp_set_num_threads(num_threads);
 
     if (!isRender) return;
 
@@ -60,7 +63,12 @@ void Simulation::init() {
 // 1) Check for food or smaller agents nearby. If so then take step towards one of them (must decide priority)
 // 2) If no food/smaller agent is found, then move randomly based on speed
 void Simulation::update() {
-    // TODO make sure that all the movements and considerations of other agents is based off their old positions when parallelizing? 
+    // Runtime calculations
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration_cast;
+    using std::chrono::duration;
+    using std::chrono::milliseconds;
+
     #pragma omp parallel for schedule(static)
     for(int i = 0; i < agents.size(); i++) {
         auto agent = agents[i];
@@ -74,9 +82,22 @@ void Simulation::update() {
         //     return adist < bdist ? a : b;
         // };
 
-        // #pragma omp declare reduction (foodRed:Food*:omp_out=foodComp(omp_out,omp_in)) initializer (omp_priv=omp_orig)
+        // #pragma omp declare reduction (                      \
+        //                                 foodRed :            \
+        //                                 Food*:omp_out=foodComp(omp_out,omp_in)) initializer (omp_priv=omp_orig)
+
+        // Food* (*cf)(Food*)(Food*)= &Agent::foodComp;
+
+        // #pragma omp declare reduction(                                           \  
+        //                                 foodRed :                                \
+        //                                 Food* :                                  \
+        //                                 cf(omp_out, omp_in)                      \
+        //                              )                                           \
+        //                         initializer (omp_priv=omp_orig)
+
 
         // get closest uneaten food
+        auto t1 = high_resolution_clock::now();
         Food* closest_food = nullptr;
         double food_dist = INT_MAX;
         // #pragma omp parallel for reduction (foodRed : closest_food)
@@ -88,6 +109,10 @@ void Simulation::update() {
             }
         }
 
+        auto t2 = high_resolution_clock::now();
+        duration<double, std::milli> f_time = t2 - t1;
+        closestFTime += f_time.count();
+
         // eat food if in range
         if(closest_food && (closest_food->pos - agent->pos).l2() < agent->size + 2) {
             #pragma omp critical
@@ -96,6 +121,8 @@ void Simulation::update() {
 
 
         // get closest living agent
+        auto t3 = high_resolution_clock::now();
+
         Agent *closest_agent = nullptr;
         double agent_dist = INT_MAX;
         for(auto ag : agents) {
@@ -105,6 +132,10 @@ void Simulation::update() {
                 agent_dist = (ag->pos - agent->pos).l2();
             }
         }
+
+        auto t4 = high_resolution_clock::now();
+        duration<double, std::milli> a_time = t4 - t3;
+        closestATime += a_time.count();
 
         // eat closest agent if possible
         if(closest_agent && agent->canEat(closest_agent)) {
@@ -211,7 +242,7 @@ void Simulation::runRound(int steps) {
 }
 
 void Simulation::destroy() {
-    if(!isRender) return;
+    if (!isRender) return;
     SDL_Delay(5000);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -250,8 +281,7 @@ void Simulation::resetFood() {
 // currently no genetic algorithm, will simply propogate agents that survive, 
 // with a chance of mutation for their offspring. 
 void Simulation::finishRound() {
-    // remove the agents which died (ran out of energy)
-    // TODO because we used new, we need to deallocate deleted agents first with delete. 
+    // Remove the agents which died (ran out of energy)
     #pragma omp parallel for schedule(static)
     for(int i = 0; i < agents.size(); i++) {
         if(agents[i]->energy <= 0) {
@@ -267,7 +297,6 @@ void Simulation::finishRound() {
     agents.erase(it, agents.end());
     int agentsSize = agents.size();
 
-    // std::cout << "before crossover: " << agents.size() << std::endl; 
     // Reserve twice the remaining amount (each living agent will duplicate)
     agents.reserve(2 * agents.size());
 
@@ -285,26 +314,23 @@ void Simulation::finishRound() {
         std::sort(agents.begin(), agents.end());
         int startInd = agents.size() - 1;
         int endInd = std::max(1, startInd - numFittestParents);
-        // TODO: figure out how to use rand_r if possible
         // If not, remove private(seed)
         unsigned seed;
         #pragma omp parallel for schedule(static) private(seed) 
         for (int i = startInd; i >= endInd; i--) {
-            // Check if all other agents have already procreated
-            int allVisited = true;
-
-            for(int k = 0; k <= startInd; k++) {
-                allVisited = allVisited && visited[k];
-            }
-            if (allVisited) break;
-
             // Move onto next agent if we have already procreated with this agent
             if (visited[i]) continue;
             // Mark agent as visited
             visited[i] = 1;
             
+            // Check if all other agents have already procreated
+            int allVisited = true;
+            for(int k = 0; k <= startInd; k++) {
+                allVisited = allVisited && visited[k];
+            }
+            if (allVisited) continue;
+
             // Generate random number
-            // TODO: check if it's safe in parallel
             std::random_device rd; 
             std::mt19937 gen(rd()); 
             std::uniform_int_distribution<> d(0, i-1);
@@ -336,7 +362,18 @@ void Simulation::finishRound() {
         }
     }
 
-    // std::cout << "after crossover: " << agents.size() << std::endl; 
+    if (agents.size() > NUM_AGENTS) {
+        for(int i = NUM_AGENTS; i < agents.size(); i++) {
+            delete agents[i];
+            agents[i] = nullptr;
+        }
+        agents.resize(NUM_AGENTS);
+
+    }
+    for(int i = agents.size(); i < NUM_AGENTS; i++) {
+        Agent* child = new Agent(SIZE, VISION, SPEED, 0, 0);
+        agents.push_back(child);
+    }
 
     // Mutate newly created agents and reset energy
     #pragma omp parallel for schedule(static)
