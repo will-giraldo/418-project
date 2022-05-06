@@ -121,7 +121,7 @@ void Agent::eatFood(Food* food) {
 }
 
 void Agent::eatAgent(Agent* ag) {
-    if(ag->energy < 0) std::cout << "Tried to eat dead agent\n";
+    if(ag->energy < 0) return;
     energy += .7 * ENERGY + .1 * ag->energy + .2 * ag->size; 
     ag->energy = -1;
 }
