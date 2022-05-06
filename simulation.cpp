@@ -211,6 +211,8 @@ void Simulation::runRound(int steps) {
 }
 
 void Simulation::destroy() {
+    if(!isRender) return;
+    SDL_Delay(5000);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

@@ -12,6 +12,7 @@
 #define HEIGHT 700
 #define NUM_ROUNDS 5000
 #define STEPS_PER_ROUND 400
+#define IS_RENDER true
 
 
 int main(int argc, char* argv[]) {
@@ -27,7 +28,7 @@ int main(int argc, char* argv[]) {
     int numAgents = 12;
     int numFood = 20;
     auto t1 = high_resolution_clock::now();
-    Simulation sim(numAgents, numFood, WIDTH, HEIGHT);
+    Simulation sim(numAgents, numFood, WIDTH, HEIGHT, IS_RENDER);
     sim.init();
 
     // Initialize clock
@@ -53,7 +54,6 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Total time was " << total_time << " ms\n";
 
-    SDL_Delay(5000);
 
     // Destroy SDL parameters
     sim.destroy();
